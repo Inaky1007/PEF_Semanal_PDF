@@ -185,6 +185,31 @@
           !selected(key) || normalize(row[key]) === normalize(filters[key])
         ));
       }
+      // Orden dinámico de HTML_Hierarquia (Power BI), a partir de ID_DG,
+      // ID_Pp e ID_Cv publicados desde dbo.BD_Ctl_PEF en cada JSON.
+      // No hay listas fijas de sectores, conceptos, programas ni obras.
+      let ordenSector = new Map();
+      const ordenTexto = (a, b) => String(a).localeCompare(String(b), 'es', { numeric: false });
+      function prepararOrden(registros) {
+        const sectorMinimo = new Map();
+        const conceptoIDs = new Map();
+        for (const r of registros) {
+          if (!Number.isInteger(r.id_dg)) {
+            throw new Error('Los datos publicados no contienen ID_DG numérico. Ejecuta Actualizar_y_Publicar_PDF_v2.py.');
+          }
+          const sector = normalize(r.sector);
+          const clave = sector + '|' + normalize(r.concepto);
+          if (conceptoIDs.has(clave) && conceptoIDs.get(clave) !== r.id_dg) {
+            throw new Error('El concepto ' + r.concepto + ' presenta distintos ID_DG en el corte. Revisa el catálogo SQL.');
+          }
+          conceptoIDs.set(clave, r.id_dg);
+          sectorMinimo.set(sector, Math.min(sectorMinimo.get(sector) ?? Infinity, r.id_dg));
+        }
+        // Mismo criterio de HTML_Hierarquia: sector = menor ID_DG del sector.
+        // Se calcula ANTES de aplicar los filtros para que el orden no cambie
+        // accidentalmente cuando el usuario selecciona una entidad u obra.
+        ordenSector = sectorMinimo;
+      }
       function group(rows, key) {
         const map = new Map();
         for (const row of rows) {
@@ -192,8 +217,28 @@
           if (!map.has(name)) map.set(name, []);
           map.get(name).push(row);
         }
-        return [...map].map(([name, data]) => ({ name, stats: aggregate(data) }))
-          .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+        const grupos = [...map].map(([name, data]) => {
+          const dg = Math.min(...data.map(r => r.id_dg));
+          // En la jerarquía DAX Pp e ID_Cv son texto y forman las claves
+          // OrdenVisual de programa y obra, respectivamente.
+          const pp = data.map(r => String(r.id_pp || '')).sort(ordenTexto)[0] || '';
+          const cv = data.map(r => String(r.id_cv || '0')).sort(ordenTexto)[0] || '0';
+          const sector = Math.min(...data.map(r => ordenSector.get(normalize(r.sector)) ?? Infinity));
+          return { name, stats: aggregate(data), orden: { sector, dg, pp, cv } };
+        });
+        return grupos.sort((a, b) => {
+          // OrdenVisual: sector → ID_DG → Pp → ID_Cv.
+          // Solo se comparan los niveles pertinentes para cada desglose.
+          if (key === 'sector') return (a.orden.sector - b.orden.sector) || ordenTexto(a.name, b.name);
+          if (key === 'concepto') return (a.orden.sector - b.orden.sector) ||
+            (a.orden.dg - b.orden.dg) || ordenTexto(a.name, b.name);
+          if (key === 'programa') return (a.orden.sector - b.orden.sector) ||
+            (a.orden.dg - b.orden.dg) || ordenTexto(a.orden.pp, b.orden.pp) || ordenTexto(a.name, b.name);
+          if (key === 'obra') return (a.orden.sector - b.orden.sector) ||
+            (a.orden.dg - b.orden.dg) || ordenTexto(a.orden.pp, b.orden.pp) ||
+            ordenTexto(a.orden.cv, b.orden.cv) || ordenTexto(a.name, b.name);
+          return ordenTexto(a.name, b.name);
+        });
       }
       function makeGroups(rows) {
         // En la vista nacional se incluyen ambos sectores y sus conceptos.
@@ -271,6 +316,7 @@
             throw new Error('El archivo de datos no coincide con la fecha o el esquema solicitado.');
           }
           if (dataset.registros.length === 0) throw new Error('El archivo de datos está vacío.');
+          prepararOrden(dataset.registros);
           const filtered = filterRows(dataset.registros);
           if (!filtered.length) {
             throw new Error('La combinación de filtros no tiene registros en el corte solicitado. Revisa Sector, Concepto, Programa, Obra y Entidad.');

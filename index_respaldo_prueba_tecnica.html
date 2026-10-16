@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>SICT | Exportación PDF - Prueba de conexión</title>
+  <style>
+    :root { font-family: "Segoe UI", Arial, sans-serif; color: #111; background: #f6f6f6; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    .barra { height: 8px; background: #6a1b3d; }
+    main { max-width: 850px; margin: 40px auto; padding: 0 20px; }
+    .panel { background: #fff; border: 1px solid #dedede; border-radius: 9px; padding: 30px; }
+    .ceja { color: #6a1b3d; letter-spacing: .06em; font-size: 13px; font-weight: 800; text-transform: uppercase; }
+    h1 { font-size: clamp(23px, 4vw, 30px); margin: 8px 0 12px; color: #4e122c; }
+    .intro { line-height: 1.6; max-width: 680px; margin: 0 0 22px; }
+    .alerta { border-left: 4px solid #b89b5e; background: #faf8f1; padding: 11px 15px; margin: 0 0 24px; line-height: 1.55; }
+    h2 { font-size: 18px; margin: 0 0 14px; }
+    dl { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 0; margin: 0 0 24px; border: 1px solid #e3e3e3; border-bottom: 0; }
+    dt, dd { min-width: 0; padding: 11px 12px; margin: 0; border-bottom: 1px solid #e3e3e3; overflow-wrap: anywhere; }
+    dt { background: #f7f4f5; font-weight: 700; color: #4e122c; }
+    button { background: #6a1b3d; border: 1px solid #6a1b3d; color: #fff; border-radius: 5px; font-size: 16px; font-weight: 700; padding: 13px 20px; cursor: pointer; min-height: 48px; }
+    button:hover { background: #4e122c; }
+    button:focus-visible { outline: 3px solid #b89b5e; outline-offset: 3px; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    .mensaje { margin-top: 13px; line-height: 1.5; font-size: 14px; }
+    footer { font-size: 13px; color: #555; padding: 18px 4px; }
+    @media (max-width: 520px) { main { margin: 20px auto; } .panel { padding: 20px 16px; } dl { grid-template-columns: minmax(0, 1fr); } dt { padding-bottom: 2px; border-bottom: 0; } dd { padding-top: 2px; } }
+  </style>
+</head>
+<body>
+  <div class="barra"></div>
+  <main>
+    <section class="panel" aria-labelledby="titulo">
+      <div class="ceja">Secretaría de Infraestructura, Comunicaciones y Transportes</div>
+      <h1 id="titulo">Exportación PDF — Prueba técnica</h1>
+      <p class="intro">Primera prueba del generador de PDF para el tablero de Avance Financiero de la SICT.</p>
+      <p class="alerta"><strong>Versión de prueba.</strong> Este archivo todavía no contiene cifras financieras ni consulta bases de datos. Su único objetivo es comprobar que GitHub Pages puede recibir parámetros y generar un PDF descargable.</p>
+      <h2>Parámetros recibidos</h2>
+      <dl id="parametros">
+        <dt>Fecha de corte</dt><dd id="dato-fecha">—</dd>
+        <dt>Sector</dt><dd id="dato-sector">—</dd>
+        <dt>Concepto</dt><dd id="dato-concepto">—</dd>
+        <dt>Programa</dt><dd id="dato-programa">—</dd>
+        <dt>Obra</dt><dd id="dato-obra">—</dd>
+        <dt>Entidad</dt><dd id="dato-entidad">—</dd>
+      </dl>
+      <button id="descargar" type="button">Descargar PDF de prueba</button>
+      <div class="mensaje" role="status" aria-live="polite" id="estado">No se ha generado ningún documento.</div>
+    </section>
+    <footer>Proyecto PEF Semanal PDF · Etapa 1: validación técnica</footer>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      const campos = [
+        ['fecha', 'Fecha de corte'], ['sector', 'Sector'], ['concepto', 'Concepto'],
+        ['programa', 'Programa'], ['obra', 'Obra'], ['entidad', 'Entidad']
+      ];
+      const q = new URLSearchParams(window.location.search);
+      const valores = {};
+      for (const [clave] of campos) {
+        const dato = (q.get(clave) || '').trim().slice(0, 250);
+        valores[clave] = dato || 'Sin selección específica';
+        document.getElementById('dato-' + clave).textContent = valores[clave];
+      }
+      const boton = document.getElementById('descargar');
+      const estado = document.getElementById('estado');
+      boton.addEventListener('click', function () {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+          estado.textContent = 'No se cargó la biblioteca de PDF. Revisa la conexión a internet e inténtalo de nuevo.';
+          return;
+        }
+        boton.disabled = true;
+        try {
+          const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+          const ancho = pdf.internal.pageSize.getWidth();
+          pdf.setFillColor(106, 27, 61);
+          pdf.rect(0, 0, ancho, 7, 'F');
+          pdf.setTextColor(78, 18, 44);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(16);
+          pdf.text('SICT | Exportacion PDF', 18, 23);
+          pdf.setFontSize(11);
+          pdf.text('PRUEBA TECNICA - SIN DATOS FINANCIEROS', 18, 34);
+          pdf.setDrawColor(184, 155, 94);
+          pdf.line(18, 39, ancho - 18, 39);
+          pdf.setTextColor(0, 0, 0);
+          let y = 53;
+          for (const [clave, etiqueta] of campos) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(10);
+            pdf.text(etiqueta + ':', 18, y);
+            pdf.setFont('helvetica', 'normal');
+            const lineas = pdf.splitTextToSize(valores[clave], ancho - 75);
+            pdf.text(lineas, 60, y);
+            y += Math.max(12, lineas.length * 5 + 5);
+          }
+          pdf.setFontSize(9);
+          pdf.setTextColor(90, 90, 90);
+          pdf.text('Documento generado en el navegador mediante GitHub Pages.', 18, 276);
+          const fechaNombre = /^\d{4}-\d{2}-\d{2}$/.test(valores.fecha) ? valores.fecha : 'prueba';
+          pdf.save('SICT_Exportacion_PDF_' + fechaNombre + '.pdf');
+          estado.textContent = 'PDF de prueba generado. Comprueba que los parámetros aparecen correctamente.';
+        } catch (e) {
+          estado.textContent = 'No se pudo generar el PDF. Detalle: ' + String(e && e.message ? e.message : e);
+        } finally {
+          boton.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

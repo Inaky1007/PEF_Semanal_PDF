@@ -57,6 +57,23 @@
     .prog-legend { display:flex; justify-content:center; flex-wrap:wrap; gap:9px 15px; font-size:12px; font-weight:650; margin:5px 0 8px; }
     .prog-swatch { display:inline-block; width:24px; height:3px; vertical-align:middle; margin-right:4px; }
     
+
+    .semana-preview { margin-top:25px; padding:10px; border:1px solid #dedede; border-radius:5px; }
+    .semana-preview h2 { margin:2px 0 6px; }
+    .semana-layout { display:grid; grid-template-columns:minmax(0,1.38fr) minmax(0,1fr); gap:10px; }
+    .semana-table-wrap { min-width:0; max-width:100%; overflow-x:auto; }
+    .semana-table { min-width:580px; width:100%; font-size:11px; }
+    .semana-table th { white-space:normal; background:#f0edef; font-size:10px; text-align:center; }
+    .semana-table th:first-child { min-width:150px; text-align:left; }
+    .semana-table td { font-size:10.5px; padding:6px 5px; text-align:right; }
+    .semana-table td:first-child { min-width:150px; font-weight:500; text-align:left; }
+    .semana-table tr.total td { font-weight:750; }
+    .semana-table .neg { color:#9D2449; font-weight:700; }
+    .semana-chart-wrap { min-width:0; }
+    .semana-chart-wrap svg { display:block; width:100%; height:auto; }
+    .semana-legend { display:flex; align-items:center; justify-content:center; gap:7px; font-size:10px; flex-wrap:wrap; }
+    .semana-legend span { width:14px; height:3px; display:inline-block; }
+    @media(max-width:900px){.semana-layout{grid-template-columns:1fr}}
     .actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 20px; }
     button { border: 1px solid #6a1b3d; background: #6a1b3d; color: #fff; border-radius: 5px; min-height: 48px; font: inherit; font-weight: 700; padding: 12px 20px; cursor: pointer; }
     button:hover:not(:disabled) { background: #4e122c; }
@@ -79,7 +96,7 @@
     <section class="panel" aria-labelledby="title">
       <div class="ceja">Secretaría de Infraestructura, Comunicaciones y Transportes</div>
       <h1 id="title">Informe financiero | Exportación PDF</h1>
-      <p class="sub">Exportación de Avance Financiero, Distribución geográfica y Programación PEF, con los filtros y niveles abiertos en Power BI.</p>
+      <p class="sub">Exportación de Avance Financiero, Distribución geográfica, Programación PEF y Ejercido en la semana por áreas, con los filtros y niveles abiertos en Power BI.</p>
       <div class="notice"><strong>Informe del corte seleccionado.</strong> Los importes y las filas del desglose respetan los filtros recibidos de Power BI. La distribución del mapa muestra el ejercicio por entidad federativa para el mismo sector, concepto, programa u obra, antes de restringir la entidad resaltada. Si el corte no está publicado, no se utilizan cifras de otro corte.</div>
       <dl class="context" aria-label="Filtros recibidos">
         <div><dt>Fecha de corte</dt><dd id="param-fecha">—</dd></div>
@@ -120,9 +137,25 @@
           <div id="prog-chart"></div>
           <div id="prog-chart-legend" class="prog-legend"></div>
         </section>
+        <section id="semana-preview" class="semana-preview" hidden aria-labelledby="semana-heading">
+          <h2 id="semana-heading">Ejercido en la semana por áreas</h2>
+          <p id="semana-description" class="prog-description"></p>
+          <div class="semana-layout">
+            <div class="semana-table-wrap">
+              <table class="semana-table" aria-label="Ejercido en la semana por áreas">
+                <thead><tr><th>Concepto</th><th id="semana-anterior-head">Ejercido al cierre anterior</th><th id="semana-actual-head">Ejercido al cierre actual</th><th>Ejercido en la semana</th><th>Saldo al año</th></tr></thead>
+                <tbody id="semana-body"></tbody>
+              </table>
+            </div>
+            <div class="semana-chart-wrap">
+              <div id="semana-chart"></div>
+              <p class="semana-legend"><span style="background:#6A1B3D"></span> Ejercido en la semana <span style="background:#B89B5E"></span> Saldo pendiente al mes</p>
+            </div>
+          </div>
+        </section>
       </section>
       <div class="actions">
-        <button type="button" id="download" disabled>Descargar PDF · Avance Financiero, Mapa y Programación PEF</button>
+        <button type="button" id="download" disabled>Descargar PDF</button>
         <span class="sub" id="download-status" role="status" aria-live="polite" style="margin:0"></span>
       </div>
     </section>
@@ -720,7 +753,232 @@
         }
       }
 
-      function showReport(rows, rowsGeograficos) {
+      /* Ejercido en la semana por áreas. Los cortes son instantáneas distintas:
+         no es correcto inferir la semana restando meses del mismo JSON.
+         Se consulta el último corte anterior disponible publicado en GitHub Pages.
+         Nom_Unidad y No_Unidad se leen del JSON cuando estén publicados;
+         versiones antiguas se agrupan por concepto y usan ID_DG como orden
+         reproducible de respaldo. */
+      function isoMasDias(iso, delta) {
+        const d=new Date(iso+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+delta);
+        return d.toISOString().slice(0,10);
+      }
+      function fechaCorta(iso) {
+        if(!iso)return 'no disponible';
+        const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+        const [y,mm,d]=iso.split('-').map(Number);
+        return String(d).padStart(2,'0')+' de '+m[mm-1];
+      }
+      function urlCorte(iso){return new URL('datos/'+iso.slice(0,4)+'/PEF_Semanal_'+iso+'.json',PAGE_ROOT);}
+      async function corteAnterior(fechaActual){
+        const elegido=(q.get('fechaAnterior')||'').trim();
+        if(elegido && (!/^\d{4}-\d{2}-\d{2}$/.test(elegido) || elegido>=fechaActual))
+          throw new Error('Parámetro fechaAnterior inválido: debe ser una fecha anterior al corte.');
+        let anterior=elegido;
+        if (!anterior) {
+          // Buscar el corte inmediatamente anterior, no asumir siempre 7 días.
+          // En fechas de cierres mensuales hubo intervalos de 5, 6 o 9 días.
+          for(let desde=1; desde<=35; desde+=7){
+            const fechas=Array.from({length:Math.min(7,36-desde)},(_,i)=>isoMasDias(fechaActual,-desde-i));
+            const presentes=await Promise.all(fechas.map(async f=>{
+              try{const r=await fetch(urlCorte(f),{method:'HEAD'});return r.ok;}
+              catch(_){return false;}
+            }));
+            const ix=presentes.indexOf(true);
+            if(ix>=0){anterior=fechas[ix];break;}
+          }
+        }
+        if(!anterior)return {fecha:null,registros:null,advertencia:'No se encontró un corte anterior publicado en los 35 días previos.'};
+        try{
+          const r=await fetch(urlCorte(anterior),{cache:'no-store'});
+          if(!r.ok)throw new Error('HTTP '+r.status);
+          const d=await r.json();
+          if(d.esquema!=='sict-pef-corte-v1'||d.fecha_corte!==anterior||!Array.isArray(d.registros))
+            throw new Error('Esquema o fecha no corresponden.');
+          return {fecha:anterior,registros:d.registros,advertencia:null};
+        }catch(e){return {fecha:anterior,registros:null,advertencia:'No se pudo cargar el corte anterior '+anterior+': '+String(e?.message||e)};}
+      }
+      function numUnidad(r){
+        const n=r.no_unidad ?? r.No_Unidad ?? r.numero_unidad ?? r.orden_unidad;
+        return n==null||n===''?null:Number(n);
+      }
+      function nombreUnidad(r){return String(r.nom_unidad ?? r.Nom_Unidad ?? r.concepto ?? 'Sin identificar');}
+      function gruposSemana(rows){
+        const grupos=new Map();
+        for(const r of rows||[]){
+          const nom=nombreUnidad(r),id=normalize(nom);
+          if(!grupos.has(id))grupos.set(id,{nombre:nom,ejercido:0,modificado:0,modMes:0,orden:Infinity,n:0});
+          const g=grupos.get(id),a=r.anual;
+          g.n++;g.ejercido+=getNumber(a.ejercido_hasta_corte);
+          g.modificado+=getNumber(a.modificado);
+          const idOrden=numUnidad(r);
+          if(Number.isFinite(idOrden))g.orden=Math.min(g.orden,idOrden);
+          else if(Number.isInteger(r.id_dg))g.orden=Math.min(g.orden,r.id_dg);
+          if(!Array.isArray(r.mensual?.modificado)||r.mensual.modificado.length!==12)
+            throw new Error('El JSON no contiene la serie mensual modificada necesaria para el saldo al mes.');
+          for(let i=0;i<window.__mesCortePEF;i++)g.modMes+=getNumber(r.mensual.modificado[i]);
+        }
+        return grupos;
+      }
+      function datosSemana(rowsActual,rowsPrev,fechaPrev){
+        const actual=gruposSemana(rowsActual),anterior=gruposSemana(rowsPrev||[]);
+        const ids=new Set([...actual.keys(),...anterior.keys()]);
+        const tienePrev=Array.isArray(rowsPrev);
+        const tabla=[];
+        for(const id of ids){
+          const c=actual.get(id),a=anterior.get(id);
+          const nombre=c?.nombre||a?.nombre;
+          const ejer=c?.ejercido??0,prev=tienePrev?(a?.ejercido??0):null;
+          const semana=prev===null?null:daxRound(ejer-prev,2);
+          const saldoAnual=c ? daxRound(c.modificado-c.ejercido,2) : null;
+          const saldoMes=c ? daxRound(c.modMes-c.ejercido,2) : null;
+          // DAX elimina de la tabla únicamente los conceptos sin datos en las 4 columnas.
+          if(c || a)tabla.push({nombre,anterior:prev,actual:c?ejer:null,semana,
+                                saldoAnual,saldoMes,orden:c?.orden??a?.orden??Infinity});
+        }
+        tabla.sort((a,b)=>(a.orden-b.orden)||ordenTexto(a.nombre,b.nombre));
+        const grafico=tabla.filter(a=>Math.abs(a.semana??0)>1e-6||Math.abs(a.saldoMes??0)>1e-6)
+          .sort((a,b)=>(b.semana??0)-(a.semana??0)||ordenTexto(a.nombre,b.nombre));
+        return {tabla,grafico,fechaAnterior:fechaPrev,fechaActual:filters.fecha,tienePrev,
+                totales:{anterior:tienePrev?[...anterior.values()].reduce((s,r)=>s+r.ejercido,0):null,
+                         actual:[...actual.values()].reduce((s,r)=>s+r.ejercido,0),
+                         semana:tienePrev?daxRound([...actual.values()].reduce((s,r)=>s+r.ejercido,0)-[...anterior.values()].reduce((s,r)=>s+r.ejercido,0),2):null,
+                         saldoAnual:[...actual.values()].reduce((s,r)=>s+r.modificado-r.ejercido,0)}};
+      }
+      function svgSemana(datos){
+        const w=680,n=datos.grafico.length,step=48,h=30+n*step;
+        const max=Math.max(0,...datos.grafico.flatMap(x=>[x.semana??0,x.saldoMes??0]));
+        const min=Math.min(0,...datos.grafico.flatMap(x=>[x.semana??0,x.saldoMes??0]));
+        const plotX=266,plotW=285,range=max-min||1;
+        const xx=v=>plotX+(v-min)*plotW/range;
+        const zero=xx(0),sv=[];
+        sv.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" role="img" aria-label="Ejercido en la semana y saldo pendiente al mes por unidad">`);
+        sv.push(`<rect x="0" y="0" width="${w}" height="${h}" fill="white"/>`);
+        for(let i=0;i<n;i++){
+          const d=datos.grafico[i],y=12+i*step;
+          if(i)sv.push(`<line x1="4" x2="676" y1="${y-8}" y2="${y-8}" stroke="#e7e7e7"/>`);
+          const names=String(d.nombre).split(/\s+/),lines=[''];
+          for(const word of names){const last=lines.length-1;
+            if((lines[last]+' '+word).trim().length>34&&lines.length<3)lines.push(word);
+            else lines[last]=(lines[last]+' '+word).trim();}
+          lines.forEach((l,k)=>sv.push(`<text x="5" y="${y+10+k*12}" font-family="Arial" font-size="12" fill="#000">${htmlEscape(l)}</text>`));
+          for(let k=0;k<2;k++){
+            const v=(k===0?d.semana:d.saldoMes)??0,cy=y+12+k*17;
+            sv.push(`<line x1="${zero.toFixed(1)}" x2="${zero.toFixed(1)}" y1="${cy-4}" y2="${cy+8}" stroke="#ddd"/>`);
+            const x1=xx(Math.min(0,v)),x2=xx(Math.max(0,v)),color=k===0?'#6A1B3D':'#B89B5E';
+            sv.push(`<rect x="${x1.toFixed(1)}" y="${cy-1}" width="${Math.max(1,x2-x1).toFixed(1)}" height="8" fill="${color}"/>`);
+            if(Math.abs(v)>0.000001){let labelX=v<0?Math.max(4,x1-6):Math.min(w-4,x2+6);
+              sv.push(`<text x="${labelX.toFixed(1)}" y="${cy+6}" text-anchor="${v<0?'end':'start'}" font-family="Arial" font-size="11" font-weight="bold" fill="${v<0?'#9D2449':'#000'}">${amount(v)}</text>`);}
+          }
+        }
+        sv.push('</svg>');return sv.join('');
+      }
+      function mostrarSemana(data,advertencia){
+        document.getElementById('semana-description').textContent =
+          'Ejercido al cierre: '+fechaCorta(data.fechaAnterior)+' y '+fechaCorta(data.fechaActual)+
+          ' · Importes en millones de pesos.'+(advertencia?' '+advertencia:'');
+        document.getElementById('semana-anterior-head').textContent='Ejercido al cierre del '+fechaCorta(data.fechaAnterior);
+        document.getElementById('semana-actual-head').textContent='Ejercido al cierre del '+fechaCorta(data.fechaActual);
+        const body=document.getElementById('semana-body');body.replaceChildren();
+        for(const item of [...data.tabla,{nombre:'TOTAL',anterior:data.totales.anterior,actual:data.totales.actual,semana:data.totales.semana,saldoAnual:data.totales.saldoAnual,total:true}]){
+          const tr=document.createElement('tr');if(item.total)tr.className='total';
+          const tds=[item.nombre,item.anterior,item.actual,item.semana,item.saldoAnual];
+          tds.forEach((v,i)=>{const td=document.createElement('td');td.textContent=i?amount(v):v;
+            if(i===3&&v<0)td.className='neg';tr.appendChild(td);});body.appendChild(tr);
+        }
+        document.getElementById('semana-chart').innerHTML = svgSemana(data);
+        document.getElementById('semana-preview').hidden=false;
+      }
+      function paginaSemana(pdf,datos,logo){
+        pdf.addPage();
+        const W=pdf.internal.pageSize.getWidth(),L=14,R=W-14;
+        pdf.setFillColor(106,27,61);pdf.rect(0,0,W,6,'F');
+        pdf.setFont('helvetica','bold');pdf.setTextColor(78,18,44);pdf.setFontSize(13);
+        pdf.text('SICT | Ejercido en la semana por áreas',L,17);
+        ponerLogo(pdf,logo);
+        pdf.setFontSize(9);pdf.text('Corte: '+filters.fecha+' | Importes en millones de pesos',L,24);
+        pdf.setDrawColor(184,155,94);pdf.line(L,28,R,28);
+        const contexto=[['Sector',display('sector')],['Entidad',display('entidad')]];
+        for(const k of ['concepto','programa','obra'])if(selected(k))contexto.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k],display(k)]);
+        pdf.setFont('helvetica','normal');pdf.setTextColor(30,30,30);pdf.setFontSize(7.7);
+        const lineas=pdf.splitTextToSize(contexto.map(([k,v])=>k+': '+pdfSafe(v)).join('   |   '),R-L-10);
+        const boxH=6+4*lineas.length;
+        pdf.setFillColor(248,246,247);pdf.setDrawColor(221,213,217);
+        pdf.roundedRect(L,33,R-L,boxH,1.8,1.8,'FD');pdf.text(lineas,L+4,38.3);
+        const y0=33+boxH+8;
+        if(!datos.tienePrev){
+          pdf.setFont('helvetica','bold');pdf.setTextColor(120,39,56);pdf.setFontSize(10);
+          pdf.text('No se encontró el corte anterior publicado. No se calculan diferencias semanales.',L,y0+8);
+          return;
+        }
+        const leftW=150,rightX=L+155,rightW=R-rightX;
+        const filas=datos.tabla;
+        // Tabla: conservamos el orden de unidades del catálogo cuando se publica No_Unidad.
+        const col=[55,23.7,23.7,24.7,22.9];
+        const xs=[L];for(let i=1;i<col.length;i++)xs.push(xs[i-1]+col[i-1]);
+        const valX=xs.map((x,i)=>x+col[i]-1.6);
+        const hHead=13;let y=y0;
+        pdf.setFillColor(240,240,240);pdf.rect(L,y,leftW,hHead,'F');
+        pdf.setFont('helvetica','bold');pdf.setTextColor(0,0,0);pdf.setFontSize(6.7);
+        pdf.text('Concepto',L+2,y+7.5);
+        const headers=[['Ejercido al cierre',fechaCorta(datos.fechaAnterior)],['Ejercido al cierre',fechaCorta(datos.fechaActual)],['Ejercido','en la semana'],['Saldo','al año']];
+        for(let k=0;k<4;k++){
+          pdf.text(headers[k][0],valX[k+1],y+5,{align:'right'});
+          pdf.setTextColor(106,27,61);pdf.text(headers[k][1],valX[k+1],y+9,{align:'right'});
+          pdf.setTextColor(0,0,0);
+        }
+        y+=hHead;
+        const available=192-y-9;
+        const hRow=Math.max(5.7,Math.min(8,available/(filas.length+1)));
+        for(const [ix,item] of [...filas,{nombre:'Total',...datos.totales,total:true}].entries()){
+          if(item.total){pdf.setFillColor(239,239,239);pdf.rect(L,y,leftW,hRow,'F');pdf.setDrawColor(106,27,61);pdf.line(L,y,L+leftW,y);}
+          const lines=pdf.splitTextToSize(pdfSafe(item.nombre),col[0]-4);
+          const used=lines.slice(0,2);
+          pdf.setFont('helvetica',item.total?'bold':'normal');pdf.setFontSize(6.2);pdf.setTextColor(0,0,0);
+          const yText=y+(hRow-used.length*2.6)/2+2.8;
+          pdf.text(used,L+2,yText);
+          const vals=[item.anterior,item.actual,item.semana,item.saldoAnual];
+          pdf.setFontSize(6.35);
+          vals.forEach((v,k)=>{pdf.setTextColor(k===2&&v<0?157:0,k===2&&v<0?36:0,k===2&&v<0?73:0);
+            pdf.text(amount(v),valX[k+1],y+hRow/2+2.0,{align:'right'});});
+          pdf.setDrawColor(235,235,235);pdf.setLineWidth(.12);pdf.line(L,y+hRow,L+leftW,y+hRow);
+          y+=hRow;
+        }
+        // Gráfica lateral: orden descendente por Ejercido en la semana, como el DAX.
+        const graf=datos.grafico;
+        const max=Math.max(0,...graf.flatMap(r=>[r.semana??0,r.saldoMes??0]));
+        const min=Math.min(0,...graf.flatMap(r=>[r.semana??0,r.saldoMes??0]));
+        const rango=max-min||1, nameW=46, plotW=rightW-nameW-26, plotX=rightX+nameW;
+        const X=v=>plotX+((v-min)/rango)*plotW;
+        const hChart=Math.min(8.6,(191-y0-9)/(graf.length||1));
+        pdf.setFont('helvetica','normal');pdf.setFontSize(7);
+        let yy=y0+3;
+        for(const item of graf){
+          const nameLines=pdf.splitTextToSize(pdfSafe(item.nombre),nameW-2).slice(0,2);
+          pdf.setTextColor(0,0,0);pdf.setFont('helvetica','normal');pdf.setFontSize(6.2);
+          pdf.text(nameLines,rightX+1,yy+2);
+          const vals=[item.semana??0,item.saldoMes??0],cols=[[106,27,61],[184,155,94]];
+          for(let k=0;k<2;k++){
+            const v=vals[k],ybar=yy+0.2+k*3.2,x1=X(Math.min(v,0)),x2=X(Math.max(v,0));
+            pdf.setFillColor(...cols[k]);pdf.rect(x1,ybar,Math.max(.28,x2-x1),2.2,'F');
+            if(Math.abs(v)>1e-6){pdf.setFont('helvetica','bold');pdf.setFontSize(6.2);
+              pdf.setTextColor(v<0?157:0,v<0?36:0,v<0?73:0);
+              const tx=v<0?Math.max(plotX-1,x1-1):Math.min(R-1,x2+1);
+              pdf.text(amount(v),tx,ybar+1.95,{align:v<0?'right':'left'});
+            }
+          }
+          pdf.setDrawColor(231,231,231);pdf.setLineWidth(.12);
+          pdf.line(rightX,yy+hChart,rightX+rightW,yy+hChart);yy+=hChart;
+        }
+        const legendY=Math.min(192,Math.max(yy+5,y0+8));
+        pdf.setFont('helvetica','normal');pdf.setFontSize(7.1);pdf.setTextColor(0,0,0);
+        pdf.setDrawColor(106,27,61);pdf.setLineWidth(1.1);pdf.line(rightX,legendY,rightX+6,legendY);
+        pdf.text('Ejercido en la semana',rightX+8,legendY+1.0);
+        const l2=rightX+52;pdf.setDrawColor(184,155,94);pdf.line(l2,legendY,l2+6,legendY);
+        pdf.text('Saldo pendiente al mes',l2+8,legendY+1.0);
+      }
+
+      function showReport(rows, rowsGeograficos, semanal,advertenciaSemanal) {
         const totals = aggregate(rows);
         const breakdown = makeGroups(rows);
         put('kpi-original', amount(totals.original));
@@ -738,8 +996,9 @@
         for (const item of breakdown.rows) appendRow(details, item.name, item.stats, item);
         appendRow(details, 'TOTAL', totals, { total: true });
         report = { totals, breakdown, geo: datosGeograficos(rowsGeograficos, rows),
-                   programacion: datosProgramacion(rows, window.__mesCortePEF) };
+                   programacion: datosProgramacion(rows, window.__mesCortePEF), semanal };
         ponerGraficaProgramacion(report.programacion);
+        mostrarSemana(semanal,advertenciaSemanal);
         document.getElementById('expansion-status').textContent =
           'Filas de desglose exportadas: ' + breakdown.rows.length + ' · Nodos con expansión distinta del valor inicial: ' + estadosExpandidos.size + '.';
         document.getElementById('results').hidden = false;
@@ -771,7 +1030,11 @@
             throw new Error('La combinación de filtros no tiene registros en el corte solicitado. Revisa Sector, Concepto, Programa, Obra y Entidad.');
           }
           const ambitoGeografico = filterRows(dataset.registros, true);
-          showReport(filtered, ambitoGeografico);
+          // El corte anterior debe respetar los mismos filtros, sin sustituir la fecha actual.
+          const previo=await corteAnterior(filters.fecha);
+          const anteriores=previo.registros?filterRows(previo.registros):null;
+          const semanal=datosSemana(filtered,anteriores,previo.fecha);
+          showReport(filtered, ambitoGeografico, semanal,previo.advertencia);
         } catch (error) {
           report = null;
           download.disabled = true;
@@ -891,6 +1154,7 @@
           }
           paginaMapa(pdf, mapImage, report.geo, logo);
           paginaProgramacion(pdf, programImage, report.programacion, logo);
+          paginaSemana(pdf,report.semanal,logo);
           const pages = pdf.internal.getNumberOfPages();
           for (let p = 1; p <= pages; p++) {
             pdf.setPage(p);
@@ -902,7 +1166,7 @@
           const scope = selected('obra') ? 'Obra' : selected('programa') ? 'Programa' : selected('concepto') ? 'Concepto' :
             selected('sector') ? pdfSafe(display('sector')).replace(/[^a-zA-Z0-9-]/g, '') : 'Nacional';
           pdf.save('SICT_Informe_PEF_' + filters.fecha + '_' + scope + '.pdf');
-          downloadStatus.textContent = 'PDF generado: Avance Financiero, Mapa y Programación PEF.' +
+          downloadStatus.textContent = 'PDF generado: Avance Financiero, Mapa, Programación PEF y Ejercido semanal.' +
             (logo ? '' : ' Aviso: no fue posible cargar el logotipo SICT; se empleó texto de respaldo.');
         } catch (error) {
           downloadStatus.textContent = 'Error al generar el PDF: ' + (error?.message || String(error));

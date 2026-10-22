@@ -50,6 +50,27 @@
     td.indent2 { padding-left:42px; }
     td.indent3 { padding-left:60px; }
     .expansion-status { font-size:12px;color:#404040; margin-top:9px; line-height:1.4; }
+
+    /* Distribución geográfica: vista previa del mismo mapa SVG utilizado en el PDF. */
+    .geo-preview { margin-top:25px; padding:13px 14px; border:1px solid #dedede; border-radius:6px; background:#fff; }
+    .geo-preview h2 { margin:2px 0 9px; }
+    .geo-contexto { font-size:12px; font-weight:600; background:#f7f4f6; border:1px solid #e3dce0; border-left:3px solid #6a1b3d; border-radius:4px; padding:9px 11px; margin-bottom:13px; line-height:1.5; }
+    .geo-simbologia { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:12px; font-weight:600; margin:2px 0 12px; }
+    .geo-colores { display:flex; align-items:center; gap:4px; }
+    .geo-muestra { display:inline-block; width:18px; height:13px; border:1px solid #b18f9e; border-radius:2px; }
+    .geo-cuadro { display:grid; grid-template-columns:minmax(0,2.2fr) minmax(195px,1fr); gap:12px; align-items:start; }
+    .geo-imagen { min-width:0; }
+    .geo-imagen svg { display:block; width:100%; height:auto; max-width:100%; }
+    .geo-panel { border:1px solid #ded8db; border-left:3px solid #b89b5e; border-radius:6px; padding:15px 14px; margin-top:10px; min-width:0; font-size:13px; line-height:1.5; background:#fcfbfb; }
+    .geo-panel h3 { font-size:16px; color:#6a1b3d; margin:0 0 7px; }
+    .geo-panel p { margin:4px 0 10px; color:#333; }
+    .geo-panel dl { margin:11px 0 0; }
+    .geo-panel dl>div { display:flex; justify-content:space-between; gap:15px; padding:7px 0; border-top:1px solid #eae6e8; }
+    .geo-panel dt { color:#333; }
+    .geo-panel dd { margin:0; font-weight:750; white-space:nowrap; }
+    .geo-panel .geo-destacado dt,.geo-panel .geo-destacado dd { color:#6a1b3d; }
+    @media(max-width:700px){.geo-cuadro{grid-template-columns:1fr}.geo-panel{margin-top:0}}
+
     .prog-preview { margin-top: 25px; padding: 10px; border: 1px solid #dedede; border-radius: 5px; }
     .prog-preview h2 { margin: 2px 0 5px; }
     .prog-preview svg { width:100%; height:auto; display:block; }
@@ -74,6 +95,73 @@
     .semana-legend { display:flex; align-items:center; justify-content:center; gap:7px; font-size:10px; flex-wrap:wrap; }
     .semana-legend span { width:14px; height:3px; display:inline-block; }
     @media(max-width:900px){.semana-layout{grid-template-columns:1fr}}
+
+    /* Quinta sección: Histórico de ejercicio (solo afecta este bloque). */
+    .historico-preview { margin-top:25px;padding:10px;border:1px solid #dedede;border-radius:5px; }
+    .historico-preview h2 { margin:2px 0 6px; }
+    .historico-preview svg { width:100%;height:auto;display:block; }
+    .historico-legend { display:flex;justify-content:center;flex-wrap:wrap;gap:12px 22px;font-size:12px;font-weight:650;margin:7px 0; }
+    .historico-legend i { display:inline-block;width:24px;height:3px;margin-right:6px;vertical-align:middle; }
+
+    /* Sexta sección: Saldos por entidad federativa. Prefijo se6: estilos aislados. */
+    .se6-preview { margin-top:25px; padding:14px 14px 15px; border:1px solid #dedede; border-radius:6px; background:#fff; }
+    .se6-preview h2 { margin:2px 0 13px; }
+    .se6-contexto { margin:0 0 12px; background:#f7f4f6; border:1px solid #e3dce0; border-left:3px solid #6a1b3d; border-radius:4px; padding:8px 10px; font-size:12px; font-weight:600; line-height:1.45; }
+    .se6-resumen { display:grid; grid-template-columns:minmax(130px,1.10fr) minmax(105px,1fr) 22px minmax(105px,1fr) 22px minmax(105px,1fr) minmax(130px,.95fr); gap:0; padding:8px; border:1px solid #ded8db; border-radius:5px; align-items:stretch; }
+    .se6-bloque { min-width:0; padding:10px 10px; display:flex; flex-direction:column; justify-content:center; border-left:1px solid #eee9eb; }
+    .se6-bloque:first-child { border-left:0; }
+    .se6-titulo { color:#000; font-size:13px; font-weight:700; margin-bottom:5px; }
+    .se6-dato { color:#000; font-size:16px; font-weight:750; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+    .se6-ambito { color:#6a1b3d; }
+    .se6-simbolo { display:flex; align-items:center; justify-content:center; font-size:23px; font-weight:700; }
+    .se6-porcentaje { background:#f4e9ee; border-left:1px solid #ded8db; }
+    .se6-porcentaje .se6-titulo, .se6-porcentaje .se6-dato { color:#6a1b3d; }
+    .se6-formula { grid-column:1/-1; text-align:right; border-top:1px solid #eee9eb; margin:6px 8px 0; padding:9px 1px 2px; font-size:12px; font-weight:600; }
+    .se6-consulta { grid-column:1/-1; margin:10px 5px 1px; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:10px; background:#fcf5f8; border:1px solid #e1c8d3; border-left:3px solid #6a1b3d; border-radius:4px; font-size:12px; font-weight:600; }
+    .se6-consulta[hidden] { display:none!important; }
+    button.se6-volver { min-height:0; padding:7px 10px; background:#fff; color:#6a1b3d; border:1px solid #6a1b3d; border-radius:4px; font-size:12px; white-space:nowrap; }
+    button.se6-volver:hover { color:#fff; background:#6a1b3d; }
+    .se6-chart-card { margin-top:12px; border:1px solid #ded8db; border-radius:6px; padding:12px 11px 10px; }
+    .se6-chart-top { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:10px 20px; }
+    .se6-subtitle { font-size:16px; color:#6a1b3d; font-weight:750; }
+    .se6-instruccion { font-size:12px; margin-top:4px; }
+    .se6-leyenda { display:flex; align-items:center; flex-wrap:wrap; gap:10px 15px; font-size:12px; font-weight:650; }
+    .se6-linea { display:inline-block; width:17px; height:4px; border-radius:3px; margin-right:5px; vertical-align:middle; }
+    .se6-chart-scroll { overflow-x:auto; overflow-y:hidden; width:100%; max-width:100%; }
+    .se6-chart-scroll svg { min-width:1230px; display:block; width:100%; height:auto; }
+    .se6-estado { cursor:pointer; outline:none; }
+    .se6-estado:hover .se6-zona, .se6-estado:focus-visible .se6-zona { fill:rgba(106,27,61,.07); }
+    .se6-estado.se6-activo .se6-zona { fill:rgba(106,27,61,.13); }
+    .se6-estado.se6-activo .se6-abrev { fill:#6a1b3d; text-decoration:underline; }
+    .se6-estado.se6-activo .se6-barra { stroke:#4e122c; stroke-width:2.2; }
+    .se6-cero { stroke:#949494; stroke-width:1.3; }
+    .se6-grid { stroke:#dedede; stroke-width:1; stroke-dasharray:5 6; }
+    .se6-bar-label { fill:#000; font:700 14px 'Noto Sans','Segoe UI',Arial,sans-serif; paint-order:stroke; stroke:#fff; stroke-width:3.5px; stroke-linejoin:round; pointer-events:none; }
+    .se6-abrev { fill:#000; font:700 16px 'Noto Sans','Segoe UI',Arial,sans-serif; }
+    @media (max-width:900px){ .se6-resumen{grid-template-columns:minmax(110px,1fr) 20px minmax(110px,1fr);} .se6-resumen>.se6-bloque:first-child{grid-column:1/-1;border:0;border-bottom:1px solid #eee9eb;} .se6-resumen>.se6-bloque:nth-child(2){grid-column:1} .se6-resumen>.se6-simbolo:nth-child(3){grid-column:2} .se6-resumen>.se6-bloque:nth-child(4){grid-column:3} .se6-resumen>.se6-simbolo:nth-child(5){grid-column:1} .se6-resumen>.se6-bloque:nth-child(6){grid-column:2/4} .se6-resumen>.se6-porcentaje{grid-column:1/-1;} .se6-consulta{flex-wrap:wrap;} }
+
+    /* Séptima sección: Obras nuevas. La tabla web conserva el listado completo;
+       la exportación PDF presenta únicamente las diez incorporaciones más recientes. */
+    .on7-preview { margin-top:25px; padding:14px; border:1px solid #dedede; border-radius:6px; background:#fff; }
+    .on7-preview h2 { margin:2px 0 12px; }
+    .on7-contexto { border-left:3px solid #6a1b3d; background:#f7f4f6; padding:8px 10px; font-size:12px; font-weight:600; margin-bottom:12px; border-radius:4px; }
+    .on7-resumen { display:flex; justify-content:space-between; gap:12px 20px; flex-wrap:wrap; align-items:center; padding:12px 13px; background:#f8f7f7; border:1px solid #dedede; border-radius:5px; margin-bottom:12px; }
+    .on7-resumen-item { font-size:13px; font-weight:600; }
+    .on7-resumen-item strong { color:#6a1b3d; font-size:16px; font-weight:800; margin-left:7px; }
+    .on7-resumen-contexto { margin-left:auto; font-size:12px; font-weight:600; text-align:right; }
+    .on7-desc { font-size:12px; color:#444; margin:0 0 10px; line-height:1.4; }
+    .on7-scroll { max-height:380px; overflow:auto; max-width:100%; border:1px solid #dedede; border-radius:5px; }
+    .on7-head,.on7-row { display:grid; grid-template-columns:135px 78px 70px 140px minmax(340px,1fr) 125px; min-width:1000px; }
+    .on7-head { position:sticky; top:0; z-index:3; background:#f4f4f4; border-bottom:1px solid #ccc; }
+    .on7-row { border-bottom:1px solid #ece8ea; background:#fff; }
+    .on7-row:hover { background:#fcf5f8; }
+    .on7-head>div,.on7-row>div { padding:9px 10px; border-right:1px solid #eee9eb; min-width:0; overflow-wrap:anywhere; display:flex; align-items:center; }
+    .on7-head>div { font-size:12px; font-weight:750; min-height:45px; text-align:center; justify-content:center; }
+    .on7-row>div { font-size:13px; min-height:41px; }
+    .on7-row>div:nth-child(1),.on7-row>div:nth-child(2),.on7-row>div:nth-child(3),.on7-row>div:nth-child(4) { justify-content:center; text-align:center; }
+    .on7-row>div:last-child { justify-content:flex-end; font-weight:750; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .on7-empty { padding:25px; text-align:center; font-size:13px; font-weight:650; }
+    @media(max-width:760px) { .on7-resumen-contexto { text-align:left; flex-basis:100%; margin-left:0; } }
     .actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 20px; }
     button { border: 1px solid #6a1b3d; background: #6a1b3d; color: #fff; border-radius: 5px; min-height: 48px; font: inherit; font-weight: 700; padding: 12px 20px; cursor: pointer; }
     button:hover:not(:disabled) { background: #4e122c; }
@@ -96,7 +184,7 @@
     <section class="panel" aria-labelledby="title">
       <div class="ceja">Secretaría de Infraestructura, Comunicaciones y Transportes</div>
       <h1 id="title">Informe financiero | Exportación PDF</h1>
-      <p class="sub">Exportación de Avance Financiero, Distribución geográfica, Programación PEF y Ejercido en la semana por áreas, con los filtros y niveles abiertos en Power BI.</p>
+      <p class="sub">Exportación de Avance Financiero, Distribución geográfica, Programación PEF, Ejercido en la semana por áreas, Histórico de ejercicio, Saldos por entidad federativa y Obras nuevas, con los filtros y niveles abiertos en Power BI.</p>
       <div class="notice"><strong>Informe del corte seleccionado.</strong> Los importes y las filas del desglose respetan los filtros recibidos de Power BI. La distribución del mapa muestra el ejercicio por entidad federativa para el mismo sector, concepto, programa u obra, antes de restringir la entidad resaltada. Si el corte no está publicado, no se utilizan cifras de otro corte.</div>
       <dl class="context" aria-label="Filtros recibidos">
         <div><dt>Fecha de corte</dt><dd id="param-fecha">—</dd></div>
@@ -131,6 +219,22 @@
           </table>
         </div>
         <div id="expansion-status" class="expansion-status" role="status" aria-live="polite"></div>
+        <section class="geo-preview" aria-labelledby="geo-heading">
+          <h2 id="geo-heading">Distribución geográfica del ejercido</h2>
+          <div id="geo-contexto" class="geo-contexto">Preparando distribución geográfica…</div>
+          <div class="geo-simbologia" aria-label="Escala de ejercido por entidad">
+            <strong>Simbología · Ejercido por entidad</strong>
+            <span>Menor</span>
+            <span class="geo-colores" aria-hidden="true"><i class="geo-muestra" style="background:#F2E3E9"></i><i class="geo-muestra" style="background:#E3C4D0"></i><i class="geo-muestra" style="background:#C996AA"></i><i class="geo-muestra" style="background:#9D5A77"></i><i class="geo-muestra" style="background:#6A1B3D"></i></span>
+            <span>Mayor</span>
+            <span class="geo-muestra" style="background:#E7E0E3" aria-hidden="true"></span>
+            <span>Sin ejercicio</span>
+          </div>
+          <div class="geo-cuadro">
+            <div id="geo-imagen" class="geo-imagen" role="img" aria-label="Mapa de México con el ejercicio por entidad federativa"></div>
+            <aside id="geo-panel" class="geo-panel" aria-label="Resumen de distribución geográfica"></aside>
+          </div>
+        </section>
         <section class="prog-preview" aria-labelledby="prog-heading">
           <h2 id="prog-heading">Programación PEF</h2>
           <p class="prog-description">Evolución mensual acumulada del ámbito filtrado · Millones de pesos.</p>
@@ -151,6 +255,50 @@
               <div id="semana-chart"></div>
               <p class="semana-legend"><span style="background:#6A1B3D"></span> Ejercido en la semana <span style="background:#B89B5E"></span> Saldo pendiente al mes</p>
             </div>
+          </div>
+        </section>
+        <section id="historico-preview" class="historico-preview" aria-labelledby="historico-heading">
+          <h2 id="historico-heading">Histórico de ejercicio</h2>
+          <p class="prog-description" id="historico-description">Consultando cortes históricos publicados…</p>
+          <div id="historico-chart"></div>
+          <div id="historico-legend" class="historico-legend"></div>
+        </section>
+
+        <section id="se6-preview" class="se6-preview" aria-labelledby="se6-heading">
+          <h2 id="se6-heading">Saldos por entidad federativa</h2>
+          <div id="se6-contexto" class="se6-contexto" aria-label="Contexto general de la sección"></div>
+          <div class="se6-resumen" aria-label="Resumen de saldo del ámbito consultado">
+            <div class="se6-bloque"><span class="se6-titulo" id="se6-titulo-ambito">Ámbito consultado</span><strong class="se6-dato se6-ambito" id="se6-ambito">—</strong></div>
+            <div class="se6-bloque"><span class="se6-titulo">Modificado</span><strong class="se6-dato" id="se6-modificado">—</strong></div>
+            <span class="se6-simbolo" aria-hidden="true">−</span>
+            <div class="se6-bloque"><span class="se6-titulo">Ejercido</span><strong class="se6-dato" id="se6-ejercido">—</strong></div>
+            <span class="se6-simbolo" aria-hidden="true">=</span>
+            <div class="se6-bloque"><span class="se6-titulo">Saldo</span><strong class="se6-dato" id="se6-saldo">—</strong></div>
+            <div class="se6-bloque se6-porcentaje"><span class="se6-titulo">Saldo / Modificado</span><strong class="se6-dato" id="se6-relacion">—</strong></div>
+            <div class="se6-formula">Saldo = Modificado − Ejercido &nbsp; · &nbsp; Relación = Saldo ÷ Modificado</div>
+            <div id="se6-consulta" class="se6-consulta" hidden><span>Consulta local de entidad: las tarjetas cambian sin filtrar el resto del informe.</span><button id="se6-volver" class="se6-volver" type="button">Volver al ámbito del informe</button></div>
+          </div>
+          <div class="se6-chart-card">
+            <div class="se6-chart-top">
+              <div><div class="se6-subtitle">Saldo y ejercido por entidad federativa</div><p class="se6-instruccion">Selecciona una abreviatura o una barra para consultar sus cifras.</p></div>
+              <div class="se6-leyenda"><span><i class="se6-linea" style="background:#6A1B3D"></i>Saldo al año</span><span><i class="se6-linea" style="background:#527E73"></i>Ejercido</span></div>
+            </div>
+            <div id="se6-chart" class="se6-chart-scroll" aria-label="Gráfica de saldos y ejercido por entidad federativa"></div>
+          </div>
+        </section>
+
+        <section class="on7-preview" id="on7-preview" aria-labelledby="on7-heading">
+          <h2 id="on7-heading">Obras nuevas</h2>
+          <div class="on7-contexto" id="on7-contexto">Consultando primeras apariciones de obras…</div>
+          <div class="on7-resumen" id="on7-resumen" hidden>
+            <div class="on7-resumen-item">Obras incorporadas <strong id="on7-cantidad">—</strong></div>
+            <div class="on7-resumen-item">Modificado en su incorporación <strong id="on7-total">—</strong></div>
+            <div class="on7-resumen-contexto" id="on7-plazo"></div>
+          </div>
+          <p class="on7-desc" id="on7-description">El listado en pantalla conserva todas las incorporaciones. La página PDF muestra como máximo las diez más recientes.</p>
+          <div class="on7-scroll" role="region" tabindex="0" aria-label="Listado de obras nuevas con desplazamiento vertical y horizontal">
+            <div class="on7-head"><div>Fecha de corte</div><div>Unidad</div><div>Pp</div><div>Clave de cartera</div><div>Obras del SICT</div><div>Modificado</div></div>
+            <div id="on7-body"></div>
           </div>
         </section>
       </section>
@@ -460,6 +608,51 @@
         return '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="992" viewBox="0 0 1000 620">' +
           '<rect width="1000" height="620" fill="#FFFFFF"/>' + parts.join('') + '</svg>';
       }
+
+      // Vista HTML del mismo mapa que se exporta al PDF. No modifica los filtros
+      // ni crea una segunda fuente de datos; reutiliza report.geo y svgMapa().
+      function mostrarMapa(geo) {
+        document.getElementById('geo-imagen').innerHTML = svgMapa(geo);
+        const ambito = [['Sector',display('sector')]];
+        for (const k of ['concepto','programa','obra']) {
+          if (selected(k)) ambito.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k], display(k)]);
+        }
+        ambito.push(['Entidad',geo.selectedState || 'Nacional']);
+        document.getElementById('geo-contexto').textContent = ambito.map(([k,v])=>k+': '+v).join('   |   ');
+        const panel = document.getElementById('geo-panel');
+        panel.replaceChildren();
+        const h = document.createElement('h3');
+        const desc = document.createElement('p');
+        if (!geo.selectedState) {
+          h.textContent='Distribución nacional';
+          desc.textContent='Los colores representan el monto ejercido por entidad federativa.';
+          panel.append(h,desc);
+          return;
+        }
+        const label = document.createElement('div');
+        label.style.cssText='font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:.04em';
+        label.textContent=geo.fromWork ? 'Entidad asociada a la obra' : 'Entidad seleccionada';
+        h.textContent=geo.selectedState;
+        desc.textContent='Tonos: ejercido por entidad del ámbito seleccionado.';
+        panel.append(label,h,desc);
+        const dato = geo.states.get(geo.selectedState);
+        const saldo = daxRound(dato.modificado - dato.ejercido,2);
+        const relacion = Math.abs(dato.modificado)<1e-10 ? null : 100*saldo/dato.modificado;
+        const dl = document.createElement('dl');
+        for (const [titulo,valor,resaltado] of [
+          ['Modificado',amount(dato.modificado),false],
+          ['− Ejercido',amount(dato.ejercido),false],
+          ['= Saldo',amount(saldo),true],
+          ['Saldo / Modificado',fmtPct(relacion),true]]) {
+          const fila = document.createElement('div');
+          if (resaltado) fila.className='geo-destacado';
+          const dt=document.createElement('dt'),dd=document.createElement('dd');
+          dt.textContent=titulo;dd.textContent=valor;
+          fila.append(dt,dd);dl.appendChild(fila);
+        }
+        panel.appendChild(dl);
+      }
+
       async function imagenMapa(geo) {
         // Convertir el SVG vectorial a PNG localmente, sin servicios de mapas.
         const blob = new Blob([svgMapa(geo)], { type: 'image/svg+xml;charset=utf-8' });
@@ -680,7 +873,7 @@
           const img=new Image();
           await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('No se pudo preparar el gráfico de Programación PEF.'));img.src=url;});
           const canvas=document.createElement('canvas');
-          canvas.width=2600;canvas.height=1240;
+          canvas.width=2640;canvas.height=1030;
           const ctx=canvas.getContext('2d');
           if(!ctx)throw new Error('No fue posible preparar el lienzo del gráfico.');
           ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -978,7 +1171,530 @@
         pdf.text('Saldo pendiente al mes',l2+8,legendY+1.0);
       }
 
-      function showReport(rows, rowsGeograficos, semanal,advertenciaSemanal) {
+
+      /* Histórico por Fecha_Corte, como la gráfica nativa del PBIX:
+         Calendario al mes (suma de Modificado hasta el mes de corte)
+         y Ejercido2 (ejercido mensual de toda la instantánea, como en Power BI).
+         Los cortes se obtienen del índice publicado, sin interpolaciones. */
+      function fechasDelIndice(indice, incluirEjerciciosAnteriores = false) {
+        const fechas=new Set(), anio=filters.fecha.slice(0,4);
+        const fechaValida=/^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/;
+        function leer(v,prof) {
+          if(prof>12 || v==null) return;
+          if(typeof v==='string') {
+            // Permite cadenas ISO y rutas del tipo PEF_Semanal_2026-10-08.json.
+            const halladas=v.match(/\d{4}-\d{2}-\d{2}/g)||[];
+            for(const f of halladas) if(fechaValida.test(f)&&(incluirEjerciciosAnteriores||f.startsWith(anio))&&f<=filters.fecha)fechas.add(f);
+          }else if(Array.isArray(v)) {
+            for(const item of v)leer(item,prof+1);
+          }else if(typeof v==='object') {
+            for(const [k,item] of Object.entries(v)){leer(k,prof+1);leer(item,prof+1);}
+          }
+        }
+        leer(indice,0);
+        fechas.add(filters.fecha);
+        return [...fechas].sort();
+      }
+      function calculoHistorico(rows,fecha,mesCorte) {
+        if(!Number.isInteger(mesCorte)||mesCorte<1||mesCorte>12)
+          throw new Error('Mes de corte inválido en histórico: '+fecha);
+        let calendario=0,ejercido=0;
+        for(const r of rows){
+          const modificadoMensual=r.mensual?.modificado;
+          const ejercidoMensual=r.mensual?.ejercido;
+          if(!Array.isArray(modificadoMensual)||modificadoMensual.length!==12 ||
+             !Array.isArray(ejercidoMensual)||ejercidoMensual.length!==12)
+            throw new Error('Falta información mensual para el corte '+fecha);
+          // Calendario al mes: suma de enero al mes de la fecha de corte.
+          for(let i=0;i<mesCorte;i++)calendario+=getNumber(modificadoMensual[i]);
+          // Ejercido2 en Power BI: el contexto actual de calendario incluye
+          // los 12 meses de la instantánea. En cortes excepcionales hay
+          // valores de meses posteriores al corte y Power BI los incluye.
+          // No usar anual.ejercido_hasta_corte: éste limita al mes del corte.
+          for(let i=0;i<12;i++)ejercido+=getNumber(ejercidoMensual[i]);
+        }
+        return {fecha,calendario,ejercido};
+      }
+      async function cargarHistorico() {
+        const indiceUrl=new URL('datos/indice.json',PAGE_ROOT);
+        const res=await fetch(indiceUrl,{cache:'no-store'});
+        if(!res.ok)throw new Error('No se pudo consultar datos/indice.json (HTTP '+res.status+').');
+        // Obras nuevas exige conocer la primera aparición REAL de cada ID;
+        // por ello se consideran también cortes de ejercicios anteriores.
+        const cortes=fechasDelIndice(await res.json(),true);
+        const anio=filters.fecha.slice(0,4);
+        const cortesEjercicio=cortes.filter(f=>f.startsWith(anio));
+        if(cortesEjercicio.length<1)throw new Error('El índice no contiene fechas de corte de '+anio+'.');
+        const puntos=[],omitidos=[],primeras=new Map();
+        // Reutilizar la misma descarga de cada corte para histórico y obras nuevas.
+        // Los lotes se procesan en orden cronológico, aunque su fetch sea paralelo.
+        for(let i=0;i<cortes.length;i+=5) {
+          const lote=await Promise.all(cortes.slice(i,i+5).map(async fecha=>{
+            try {
+              const r=await fetch(urlCorte(fecha),{cache:'no-store'});
+              if(!r.ok)throw new Error('HTTP '+r.status);
+              const d=await r.json();
+              if(d.esquema!=='sict-pef-corte-v1'||d.fecha_corte!==fecha||!Array.isArray(d.registros))
+                throw new Error('Fecha o esquema incorrectos');
+              const filtradas=filterRows(d.registros);
+              const punto=fecha.startsWith(anio)&&filtradas.length
+                ? calculoHistorico(filtradas,fecha,d.mes_corte):null;
+              return {fecha,filtradas,punto};
+            }catch(e){return {error:fecha+': '+String(e?.message||e)};}
+          }));
+          for(const item of lote){
+            if(item?.error){omitidos.push(item.error);continue;}
+            if(!item)continue;
+            if(item.punto)puntos.push(item.punto);
+            for(const r of item.filtradas){
+              const id=String(r.id_pef??'');
+              if(!id)throw new Error('Registro sin ID_PEF en '+item.fecha);
+              if(!primeras.has(id)){
+                primeras.set(id, {id_pef:id,fechaPrimera:item.fecha,
+                  modificadoPrimera:getNumber(r.anual?.modificado),ultima:r});
+              }else primeras.get(id).ultima=r;
+            }
+          }
+        }
+        if(puntos.length<1)throw new Error('No hay cortes históricos compatibles con los filtros actuales.');
+        // Como en DAX: filtrar por el AÑO DE LA PRIMERA aparición, no por
+        // el año del último corte en que el registro esté presente.
+        const obras=[...primeras.values()].filter(x=>x.fechaPrimera.startsWith(anio)).map(x=>{
+          const r=x.ultima, id=x.id_pef;
+          // ID_PEF = ejercicio (4) + No_Unidad (3) + Pp (4) + ID_Edo (2) + ID_Cv.
+          // El JSON no contiene No_Unidad por separado; se conserva su texto.
+          const unidad=String(r.no_unidad??id.slice(4,7)??'');
+          return {id_pef:id,fechaPrimera:x.fechaPrimera,unidad,
+            pp:String(r.id_pp??''),cartera:String(r.id_cv??''),
+            obra:String(r.obra??'').trim()||'Sin nombre registrado',
+            modificado:x.modificadoPrimera};
+        }).sort((a,b)=>b.fechaPrimera.localeCompare(a.fechaPrimera)||a.id_pef.localeCompare(b.id_pef));
+        return {puntos,omitidos,fechasIndice:cortesEjercicio.length,
+          // Si falta un corte no afirmamos nuevas incorporaciones: la primera
+          // aparición podría encontrarse en una instantánea no descargada.
+          obrasNuevas:omitidos.length?null:{obras,cantidad:obras.length,
+            modificadoTotal:obras.reduce((total,r)=>total+r.modificado,0),
+            ejercicio:anio,fechaActual:filters.fecha}};
+      }
+      function svgHistorico(hist) {
+        // Geometría y espaciamiento basados en HTML Histórico Ejercicio (DAX).
+        const W=1320,H=515,izq=67,der=75,sup=64,inf=80;
+        const w=W-izq-der,h=H-sup-inf;
+        const pt=hist.puntos, n=pt.length;
+        const maxValor=Math.max(0,...pt.flatMap(p=>[p.calendario,p.ejercido]));
+        const maxEscala=maxValor<=0?1:maxValor*1.12;
+        // IMPORTANTE: DAX posiciona por RANK (ASC, DENSE), no por intervalo temporal.
+        const x=i=>n<=1?izq+w/2:izq+i/(n-1)*w;
+        const y=v=>sup+h-(v/maxEscala)*h;
+        const pasoFecha=n<=12?1:n<=24?2:n<=36?3:4;
+        const pasoValor=n<=8?1:n<=16?2:n<=28?3:n<=40?4:5;
+        const verIndice=(i,paso)=>i===0||i===n-1||(i%paso===0 && (n-1-i)>=paso);
+        const fechaLarga=iso=>{
+          const [yy,mm,dd]=iso.split('-').map(Number);
+          return String(dd).padStart(2,'0')+' de '+['enero','febrero','marzo','abril','mayo','junio',
+                    'julio','agosto','septiembre','octubre','noviembre','diciembre'][mm-1]+' de '+yy;
+        };
+        const labelNum=v=>amount(v);
+        const fmtX=i=>x(i).toFixed(1);
+        const fmtY=v=>y(v).toFixed(1);
+        const svg=[];
+        svg.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Histórico de ejercicio por fecha de corte">`);
+        svg.push(`<rect width="${W}" height="${H}" fill="#FFFFFF"/>`);
+        // Cuatro guías horizontales y una línea base, sin eje vertical rotulado (como Power BI).
+        for(let k=0;k<=3;k++) {
+          const yy=sup+h*(k/4);
+          svg.push(`<line x1="${izq}" x2="${W-der}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}" stroke="#D9D9D9" stroke-width="1" stroke-dasharray="5 6" opacity=".75"/>`);
+        }
+        const yBase=sup+h;
+        svg.push(`<line x1="${izq}" x2="${W-der}" y1="${yBase}" y2="${yBase}" stroke="#ABABAB" stroke-width="1.2"/>`);
+        for(let i=0;i<n;i++){
+          if(!verIndice(i,pasoFecha))continue;
+          const xx=fmtX(i),tick=htmlEscape(fechaCorta(pt[i].fecha));
+          svg.push(`<line x1="${xx}" x2="${xx}" y1="${yBase}" y2="${yBase+5}" stroke="#BDBDBD" stroke-width="1"/>`);
+          svg.push(`<text x="${xx}" y="${yBase+25}" text-anchor="middle" fill="#000" font-family="Noto Sans,Segoe UI,Arial,sans-serif" font-size="17" font-weight="600">${tick}</text>`);
+        }
+        const series=[{key:'calendario',color:'#B89B5E',label:'Calendario al mes'},
+                      {key:'ejercido',color:'#1E5B4F',label:'Ejercido'}];
+        for(const serie of series) {
+          const points=pt.map((p,i)=>fmtX(i)+','+fmtY(p[serie.key])).join(' ');
+          svg.push(`<polyline points="${points}" fill="none" stroke="${serie.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`);
+        }
+        for(let i=0;i<n;i++) {
+          const p=pt[i],xx=fmtX(i),cy=y(p.calendario),ey=y(p.ejercido);
+          const cerca=Math.abs(cy-ey)<43;
+          const cyLabel=Math.max(sup+15,cy-(cerca?26:19));
+          const eyLabel=Math.min(sup+h-10,ey+(cerca?26:-19));
+          for(const s of series) {
+            const v=p[s.key], yy=y(v), labelY=s.key==='calendario'?cyLabel:eyLabel;
+            svg.push(`<circle cx="${xx}" cy="${yy.toFixed(1)}" r="4.6" fill="${s.color}"><title>${htmlEscape(fechaLarga(p.fecha))} | ${s.label}: ${labelNum(v)}</title></circle>`);
+            if(verIndice(i,pasoValor)) {
+              svg.push(`<text x="${xx}" y="${labelY.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-family="Noto Sans,Segoe UI,Arial,sans-serif" font-size="18" font-weight="600" fill="#000" style="paint-order:stroke;stroke:#fff;stroke-width:3.3px;stroke-linejoin:round">${labelNum(v)}</text>`);
+            }
+          }
+        }
+        svg.push('</svg>');
+        return svg.join('');
+      }
+      function mostrarHistorico(hist,advertencia) {
+        const desc=document.getElementById('historico-description');
+        const graf=document.getElementById('historico-chart');
+        const ley=document.getElementById('historico-legend');
+        if(!hist){desc.textContent='Histórico no disponible: '+advertencia;graf.replaceChildren();ley.replaceChildren();return;}
+        desc.textContent=hist.puntos.length+' cortes cargados ('+fechaCorta(hist.puntos[0].fecha)+' a '+fechaCorta(hist.puntos.at(-1).fecha)+') · Millones de pesos.'+
+          (hist.omitidos.length?' Aviso: '+hist.omitidos.length+' cortes no pudieron cargarse.':'');
+        graf.innerHTML=svgHistorico(hist);
+        ley.innerHTML='<span><i style="background:#B89B5E"></i>Calendario al mes</span><span><i style="background:#1E5B4F"></i>Ejercido</span>';
+      }
+      async function pngHistorico(hist) {
+        const blob=new Blob([svgHistorico(hist)],{type:'image/svg+xml;charset=utf-8'});
+        const url=URL.createObjectURL(blob);
+        try{
+          const img=new Image();
+          await new Promise((ok,bad)=>{img.onload=ok;img.onerror=()=>bad(new Error('No se pudo renderizar Histórico de ejercicio.'));img.src=url;});
+          const canvas=document.createElement('canvas');canvas.width=2640;canvas.height=1030;
+          const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas del histórico no disponible.');
+          ctx.fillStyle='#fff';ctx.fillRect(0,0,2640,1030);
+          ctx.drawImage(img,0,0,2640,1030);return canvas.toDataURL('image/png');
+        }finally{URL.revokeObjectURL(url);}
+      }
+      function paginaHistorico(pdf,imagen,hist,logo){
+        pdf.addPage();
+        const W=pdf.internal.pageSize.getWidth(),L=14,R=W-14;
+        pdf.setFillColor(106,27,61);pdf.rect(0,0,W,6,'F');
+        pdf.setFont('helvetica','bold');pdf.setTextColor(78,18,44);pdf.setFontSize(13);
+        pdf.text('SICT | Histórico de ejercicio',L,17);
+        ponerLogo(pdf,logo);
+        pdf.setFontSize(9);pdf.text('Corte: '+filters.fecha+' | Importes en millones de pesos',L,24);
+        pdf.setDrawColor(184,155,94);pdf.line(L,28,R,28);
+        const contexto=[['Sector',display('sector')],['Entidad',display('entidad')]];
+        for(const k of ['concepto','programa','obra'])if(selected(k))contexto.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k],display(k)]);
+        pdf.setFont('helvetica','normal');pdf.setTextColor(30,30,30);pdf.setFontSize(7.7);
+        const lineas=pdf.splitTextToSize(contexto.map(([k,v])=>k+': '+pdfSafe(v)).join('   |   '),R-L-10);
+        const boxH=6+4*lineas.length;
+        pdf.setFillColor(248,246,247);pdf.setDrawColor(221,213,217);
+        pdf.roundedRect(L,33,R-L,boxH,1.8,1.8,'FD');pdf.text(lineas,L+4,38.4);
+        const imgY=34+boxH+4,imgW=R-L,imgH=imgW*515/1320;
+        pdf.addImage(imagen,'PNG',L,imgY,imgW,imgH,undefined,'FAST');
+        const ly=imgY+imgH+6;
+        pdf.setFontSize(8);pdf.setTextColor(0,0,0);
+        pdf.setDrawColor(184,155,94);pdf.setLineWidth(1.1);pdf.line(L+3,ly,L+11,ly);pdf.text('Calendario al mes',L+14,ly+1);
+        pdf.setDrawColor(30,91,79);pdf.line(L+67,ly,L+75,ly);pdf.text('Ejercido',L+78,ly+1);
+        const ultimo=hist.puntos.at(-1);
+        pdf.setFontSize(7.5);pdf.text(hist.puntos.length+' cortes desde '+hist.puntos[0].fecha+' hasta '+ultimo.fecha,L+3,ly+9);
+        if(hist.omitidos.length)pdf.text('Aviso: '+hist.omitidos.length+' cortes no disponibles',L+3,ly+14);
+      }
+
+
+      /* Sexta sección — Saldos por entidad federativa.
+         Datos: misma fotografía JSON del corte; no se altera el estado global
+         cuando el usuario consulta una barra. El PDF usa el ámbito original. */
+      const SE6_ABREV = {
+        'Aguascalientes':'Ags.','Baja California':'BC','Baja California Sur':'BCS',
+        'Campeche':'Camp.','Coahuila':'Coah.','Colima':'Col.','Chiapas':'Chis.',
+        'Chihuahua':'Chih.','Ciudad de México':'CDMX','Durango':'Dgo.',
+        'Guanajuato':'Gto.','Guerrero':'Gro.','Hidalgo':'Hgo.',
+        'Jalisco':'Jal.','Estado de México':'Mex.','Michoacán':'Mich.',
+        'Morelos':'Mor.','Nayarit':'Nay.','Nuevo León':'NL','Oaxaca':'Oax.',
+        'Puebla':'Pue.','Querétaro':'Qro.','Quintana Roo':'Q. Roo',
+        'San Luis Potosí':'SLP','Sinaloa':'Sin.','Sonora':'Son.',
+        'Tabasco':'Tab.','Tamaulipas':'Tamps.','Tlaxcala':'Tlax.',
+        'Veracruz':'Ver.','Yucatán':'Yuc.','Zacatecas':'Zac.'
+      };
+      function se6Agrupar(ambitoGeografico, ambitoFinanciero) {
+        const mapa = new Map();
+        for (const row of ambitoGeografico) {
+          const estado = nombreEstado(row.entidad);
+          if(!estado) throw new Error('Entidad sin correspondencia en Saldos: '+String(row.entidad));
+          if(!mapa.has(estado)) mapa.set(estado,{estado,abreviatura:SE6_ABREV[estado]||estado,modificado:0,ejercido:0});
+          const v=mapa.get(estado);
+          v.modificado += getNumber(row.anual.modificado);
+          // Ejercido2 utiliza el ejercicio acumulado del contexto de calendario;
+          // en cortes especiales incluye registros de meses futuros de la foto.
+          const m=row.mensual?.ejercido;
+          if(!Array.isArray(m)||m.length!==12) throw new Error('Falta serie mensual de Ejercido en Saldos.');
+          v.ejercido += m.reduce((s,n)=>s+getNumber(n),0);
+        }
+        const estados=[...mapa.values()].map(v=>{
+          const saldo=daxRound(v.modificado-v.ejercido,2);
+          const ejercidoGrafico=daxRound(v.modificado,1)===daxRound(v.ejercido,1)?0:daxRound(v.ejercido,1);
+          return {...v,saldo,ejercidoGrafico,relacion:Math.abs(v.modificado)>1e-10?100*saldo/v.modificado:null};
+        }).filter(v=>Math.abs(v.saldo)>1e-6||Math.abs(v.ejercidoGrafico)>1e-6)
+          .sort((a,b)=>(b.saldo-a.saldo)||ordenTexto(a.estado,b.estado));
+        // Tarjetas del ámbito general: mismas filas filtradas que el informe.
+        let modificado=0,ejercido=0;
+        for(const r of ambitoFinanciero) {
+          modificado+=getNumber(r.anual.modificado);
+          const m=r.mensual?.ejercido;
+          if(!Array.isArray(m)||m.length!==12)throw new Error('Falta serie mensual para tarjetas de Saldos.');
+          ejercido+=m.reduce((s,n)=>s+getNumber(n),0);
+        }
+        const saldo=daxRound(modificado-ejercido,2);
+        let ambito='Nacional';
+        if(selected('entidad'))ambito=nombreEstado(filters.entidad)||display('entidad');
+        else if(selected('obra')) {
+          // Una obra explícita con una única entidad de catálogo: la entidad
+          // puede identificarse; no se deduce para programas ni conceptos.
+          const presentes=new Set(ambitoGeografico.map(r=>nombreEstado(r.entidad)));
+          if(presentes.size===1)ambito=[...presentes][0];
+        }
+        return {estados,resumen:{ambito,modificado,ejercido,saldo,
+          relacion:Math.abs(modificado)>1e-10?100*saldo/modificado:null}};
+      }
+      function se6PonerResumen(datos,local=false) {
+        put('se6-titulo-ambito',local?'Entidad consultada en la gráfica':'Ámbito consultado');
+        put('se6-ambito',datos.ambito??datos.estado);
+        put('se6-modificado',amount(datos.modificado));
+        put('se6-ejercido',amount(datos.ejercido));
+        put('se6-saldo',amount(datos.saldo));
+        put('se6-relacion',fmtPct(datos.relacion));
+      }
+      let se6Actual=null, se6GrupoActivo=null;
+      function se6Seleccionar(estado) {
+        if(!report?.saldos)return;
+        const dato=report.saldos.estados.find(d=>d.estado===estado);
+        if(!dato)return;
+        se6Actual=estado;
+        se6PonerResumen(dato,true);
+        document.getElementById('se6-consulta').hidden=false;
+        document.querySelectorAll('#se6-chart .se6-estado').forEach(el=>{
+          const active=el.getAttribute('data-estado')===estado;
+          el.classList.toggle('se6-activo',active);el.setAttribute('aria-pressed',String(active));
+        });
+      }
+      function se6Reiniciar() {
+        if(!report?.saldos)return;
+        se6Actual=null;
+        se6PonerResumen(report.saldos.resumen,false);
+        document.getElementById('se6-consulta').hidden=true;
+        document.querySelectorAll('#se6-chart .se6-estado').forEach(el=>{
+          el.classList.remove('se6-activo');el.setAttribute('aria-pressed','false');
+        });
+      }
+      function svgSaldos(saldos) {
+        const filas=saldos.estados,n=filas.length,W=1500,H=490,left=48,right=38,top=82,bottom=96;
+        const plotW=W-left-right,plotH=H-top-bottom;
+        if(!n)return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"><text x="750" y="245" text-anchor="middle" font-size="22">No hay información por entidad para el ámbito consultado.</text></svg>`;
+        const maxRaw=Math.max(0,...filas.flatMap(v=>[v.saldo,v.ejercidoGrafico]));
+        const minRaw=Math.min(0,...filas.flatMap(v=>[v.saldo,v.ejercidoGrafico]));
+        const maxScale=maxRaw>0?maxRaw*1.15:0,minScale=minRaw<0?minRaw*1.15:0;
+        const range=maxScale-minScale||1;
+        const y=v=>top+((maxScale-v)/range)*plotH;
+        const zero=y(0),grpW=plotW/n,bw=Math.min(16,Math.max(4,grpW*.30));
+        const svg=[`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Saldo y ejercido por entidad federativa">`,
+          `<style>.se6-cero{stroke:#949494;stroke-width:1.3}.se6-grid{stroke:#dedede;stroke-width:1;stroke-dasharray:5 6}.se6-bar-label{fill:#000;font:700 14px Arial,sans-serif;paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}.se6-abrev{fill:#000;font:700 16px Arial,sans-serif}</style>`,
+          `<rect width="${W}" height="${H}" fill="#fff"/>`];
+        for(const gy of [top,top+plotH*.5])svg.push(`<line class="se6-grid" x1="${left}" x2="${W-right}" y1="${gy.toFixed(1)}" y2="${gy.toFixed(1)}"/>`);
+        svg.push(`<line class="se6-cero" x1="${left}" x2="${W-right}" y1="${zero.toFixed(1)}" y2="${zero.toFixed(1)}"/>`);
+        for(let i=0;i<n;i++) {
+          const v=filas[i],xc=left+(i+.5)*grpW,xS=xc-bw-1.5,xE=xc+1.5;
+          const bg=`<rect class="se6-zona" x="${(xc-grpW/2).toFixed(1)}" y="${(top-18).toFixed(1)}" width="${grpW.toFixed(1)}" height="${(plotH+73).toFixed(1)}" rx="3" fill="transparent" pointer-events="all"/>`;
+          svg.push(`<g class="se6-estado" role="button" tabindex="0" aria-pressed="false" aria-label="Consultar cifras de ${htmlEscape(v.estado)}" data-estado="${htmlEscape(v.estado)}">${bg}`);
+          for(const [value,x,color,descripcion] of [[v.saldo,xS,'#6A1B3D','Saldo al año'],[v.ejercidoGrafico,xE,'#527E73','Ejercido']]){
+            const yy=y(value),barY=Math.min(zero,yy),h=Math.abs(yy-zero);
+            svg.push(`<rect class="se6-barra" x="${x.toFixed(1)}" y="${barY.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h,.8).toFixed(1)}" rx="2" fill="${color}"><title>${htmlEscape(v.estado)} | ${descripcion}: ${amount(value)}</title></rect>`);
+            if((n<=16||i<8)&&Math.abs(value)>1e-6){
+              const labY=value>=0?barY-10:barY+h+15;
+              svg.push(`<text class="se6-bar-label" x="${(x+bw/2).toFixed(1)}" y="${labY.toFixed(1)}" text-anchor="middle">${amount(value)}</text>`);
+            }
+          }
+          svg.push(`<text class="se6-abrev" x="${xc.toFixed(1)}" y="${(top+plotH+25).toFixed(1)}" text-anchor="middle">${htmlEscape(v.abreviatura)}</text></g>`);
+        }
+        svg.push('</svg>');return svg.join('');
+      }
+      function mostrarSaldos(datos) {
+        const mm=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+        const [yy,m,d]=filters.fecha.split('-').map(Number);
+        document.getElementById('se6-contexto').textContent='Información al corte del: '+d+' de '+mm[m-1]+' de '+yy+'    |    Sector: '+display('sector')+'    |    Entidad: '+display('entidad');
+        se6PonerResumen(datos.resumen);
+        document.getElementById('se6-chart').innerHTML=svgSaldos(datos);
+        document.getElementById('se6-consulta').hidden=true;
+        se6Actual=null;
+      }
+      document.getElementById('se6-chart').addEventListener('click', e=>{
+        const g=e.target.closest?.('.se6-estado');
+        if(g)se6Seleccionar(g.getAttribute('data-estado'));
+      });
+      document.getElementById('se6-chart').addEventListener('keydown',e=>{
+        if(e.key!=='Enter'&&e.key!==' ')return;
+        const g=e.target.closest?.('.se6-estado');
+        if(g){e.preventDefault();se6Seleccionar(g.getAttribute('data-estado'));}
+      });
+      document.getElementById('se6-volver').addEventListener('click',se6Reiniciar);
+      async function pngSaldos(datos){
+        const blob=new Blob([svgSaldos(datos)],{type:'image/svg+xml;charset=utf-8'});
+        const url=URL.createObjectURL(blob);
+        try{
+          const img=new Image();
+          await new Promise((ok,bad)=>{img.onload=ok;img.onerror=()=>bad(new Error('No fue posible renderizar el gráfico Saldos por entidad.'));img.src=url;});
+          const canvas=document.createElement('canvas');canvas.width=3000;canvas.height=980;
+          const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas de Saldos no disponible.');
+          ctx.fillStyle='#fff';ctx.fillRect(0,0,3000,980);ctx.drawImage(img,0,0,3000,980);
+          return canvas.toDataURL('image/png');
+        }finally{URL.revokeObjectURL(url);}
+      }
+      function paginaSaldos(pdf,imagen,datos,logo){
+        pdf.addPage();
+        const W=pdf.internal.pageSize.getWidth(),L=14,R=W-14;
+        pdf.setFillColor(106,27,61);pdf.rect(0,0,W,6,'F');
+        pdf.setFont('helvetica','bold');pdf.setTextColor(78,18,44);pdf.setFontSize(13);
+        pdf.text('SICT | Saldos por entidad federativa',L,17);ponerLogo(pdf,logo);
+        pdf.setFontSize(9);pdf.text('Corte: '+filters.fecha+' | Importes en millones de pesos',L,24);
+        pdf.setDrawColor(184,155,94);pdf.line(L,28,R,28);
+        const filtros=[['Sector',display('sector')],['Entidad',display('entidad')]];
+        for(const k of ['concepto','programa','obra'])if(selected(k))filtros.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k],display(k)]);
+        pdf.setFont('helvetica','normal');pdf.setTextColor(30,30,30);pdf.setFontSize(7.7);
+        const lineas=pdf.splitTextToSize(filtros.map(([k,v])=>k+': '+pdfSafe(v)).join('   |   '),R-L-10);
+        const boxH=6+4*lineas.length;
+        pdf.setFillColor(248,246,247);pdf.setDrawColor(221,213,217);
+        pdf.roundedRect(L,33,R-L,boxH,1.8,1.8,'FD');pdf.text(lineas,L+4,38.4);
+        const inicio=33+boxH+6;
+        // Tarjetas de resumen: ámbito general, nunca selección local.
+        const bloqueW=R-L;
+        pdf.setDrawColor(222,216,219);pdf.setFillColor(255,255,255);
+        pdf.roundedRect(L,inicio,bloqueW,30,1.7,1.7,'FD');
+        const r=datos.resumen;
+        const tarjetas=[['Ámbito consultado',r.ambito],['Modificado',amount(r.modificado)],['Ejercido',amount(r.ejercido)],['Saldo',amount(r.saldo)],['Saldo / Modificado',fmtPct(r.relacion)]];
+        const anchos=[48,47,47,47,bloqueW-189];let xx=L;
+        for(let i=0;i<tarjetas.length;i++){
+          if(i===4){pdf.setFillColor(244,233,238);pdf.rect(xx,inicio,anchos[i],30,'F');}
+          if(i>0){pdf.setDrawColor(237,232,235);pdf.line(xx,inicio+3,xx,inicio+27);}
+          pdf.setFont('helvetica','bold');pdf.setFontSize(7.9);pdf.setTextColor(i===4?106:0,i===4?27:0,i===4?61:0);
+          pdf.text(tarjetas[i][0],xx+3,inicio+10);
+          pdf.setFontSize(10.3);pdf.text(pdfSafe(String(tarjetas[i][1])),xx+3,inicio+20);
+          xx+=anchos[i];
+        }
+        pdf.setFont('helvetica','normal');pdf.setTextColor(0,0,0);pdf.setFontSize(7.6);
+        pdf.text('Saldo = Modificado - Ejercido     |     Relación = Saldo / Modificado',R-1,inicio+37,{align:'right'});
+        const chartY=inicio+44;
+        pdf.setFont('helvetica','bold');pdf.setTextColor(106,27,61);pdf.setFontSize(10.5);
+        pdf.text('Saldo y ejercido por entidad federativa',L,chartY);
+        const legendX=R-74;
+        pdf.setDrawColor(106,27,61);pdf.setLineWidth(1.2);pdf.line(legendX,chartY-1,legendX+7,chartY-1);
+        pdf.setFont('helvetica','normal');pdf.setTextColor(0,0,0);pdf.setFontSize(7.5);pdf.text('Saldo al año',legendX+9,chartY);
+        pdf.setDrawColor(82,126,115);pdf.line(legendX+43,chartY-1,legendX+50,chartY-1);pdf.text('Ejercido',legendX+52,chartY);
+        const imgY=chartY+7;
+        const imgW=Math.min(R-L,(192-imgY-2)*(1500/490));
+        if(imgW<130)throw new Error('Demasiados filtros para mostrar Saldos en una sola página.');
+        const imgH=imgW*490/1500,imgX=L+(R-L-imgW)/2;
+        pdf.addImage(imagen,'PNG',imgX,imgY,imgW,imgH,undefined,'FAST');
+      }
+
+
+      /* Séptima sección — Obras nuevas: primera aparición histórica por ID_PEF.
+         La tabla web contiene todas las filas; el PDF sólo las 10 más recientes. */
+      const ON7_LIMITE_PDF=10;
+      function mostrarObrasNuevas(datos,advertencia) {
+        const cuerpo=document.getElementById('on7-body');
+        cuerpo.replaceChildren();
+        const resumen=document.getElementById('on7-resumen');
+        if(!datos){
+          resumen.hidden=true;
+          document.getElementById('on7-contexto').textContent='Obras nuevas no disponible: '+(advertencia||'histórico no disponible');
+          const div=document.createElement('div');div.className='on7-empty';
+          div.textContent='No se pudo consultar la primera aparición de las obras.';
+          cuerpo.appendChild(div);return;
+        }
+        resumen.hidden=false;
+        document.getElementById('on7-contexto').textContent='Información al corte del: '+
+          fechaCorta(datos.fechaActual)+' de '+datos.ejercicio+' | Sector: '+display('sector')+
+          ' | Entidad: '+display('entidad');
+        put('on7-cantidad',fmtInteger.format(datos.cantidad));
+        put('on7-total',amount(datos.modificadoTotal));
+        put('on7-plazo','Primeras apariciones del ejercicio '+datos.ejercicio+' hasta '+fechaCorta(datos.fechaActual));
+        document.getElementById('on7-description').textContent=datos.cantidad+
+          ' incorporaciones en el listado completo. En el PDF se muestran hasta '+
+          ON7_LIMITE_PDF+' obras, priorizando la fecha más reciente.'+
+          (advertencia?' Aviso: '+advertencia:'');
+        if(!datos.obras.length){
+          const div=document.createElement('div');div.className='on7-empty';
+          div.textContent='No se identificaron obras incorporadas durante '+datos.ejercicio+
+            ' hasta el '+fechaCorta(datos.fechaActual)+'.';
+          cuerpo.appendChild(div);return;
+        }
+        const frag=document.createDocumentFragment();
+        for(const r of datos.obras){
+          const fila=document.createElement('div');fila.className='on7-row';
+          const valores=[fechaCorta(r.fechaPrimera),r.unidad||'–',r.pp||'–',r.cartera||'–',r.obra,amount(r.modificado)];
+          for(const valor of valores){const cel=document.createElement('div');cel.textContent=valor;fila.appendChild(cel);}
+          frag.appendChild(fila);
+        }
+        cuerpo.appendChild(frag);
+      }
+      function paginaObrasNuevas(pdf,datos,logo) {
+        pdf.addPage();
+        const W=pdf.internal.pageSize.getWidth(),L=14,R=W-14;
+        pdf.setFillColor(106,27,61);pdf.rect(0,0,W,6,'F');
+        pdf.setFont('helvetica','bold');pdf.setTextColor(78,18,44);pdf.setFontSize(13);
+        pdf.text('SICT | Obras nuevas',L,17);ponerLogo(pdf,logo);
+        pdf.setFontSize(9);pdf.text('Corte: '+filters.fecha+' | Importes en millones de pesos',L,24);
+        pdf.setDrawColor(184,155,94);pdf.line(L,28,R,28);
+        const contexto=[['Sector',display('sector')],['Entidad',display('entidad')]];
+        for(const k of ['concepto','programa','obra'])if(selected(k))
+          contexto.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k],display(k)]);
+        pdf.setFont('helvetica','normal');pdf.setTextColor(30,30,30);pdf.setFontSize(7.5);
+        const lineas=pdf.splitTextToSize(contexto.map(([k,v])=>k+': '+pdfSafe(v)).join('   |   '),R-L-10);
+        const altoCtx=6+4*lineas.length;
+        pdf.setFillColor(248,246,247);pdf.setDrawColor(221,213,217);
+        pdf.roundedRect(L,33,R-L,altoCtx,1.8,1.8,'FD');pdf.text(lineas,L+4,38.4);
+        let y=33+altoCtx+7;
+        pdf.setFillColor(248,247,247);pdf.setDrawColor(222,216,219);
+        pdf.roundedRect(L,y,R-L,18,2,2,'FD');
+        pdf.setFont('helvetica','normal');pdf.setTextColor(0,0,0);pdf.setFontSize(8.3);
+        pdf.text('Obras incorporadas',L+5,y+6);
+        pdf.text('Modificado en su incorporación',L+85,y+6);
+        pdf.setFont('helvetica','bold');pdf.setTextColor(106,27,61);pdf.setFontSize(12);
+        pdf.text(fmtInteger.format(datos.cantidad),L+5,y+13);
+        pdf.text(amount(datos.modificadoTotal),L+85,y+13);
+        pdf.setFont('helvetica','normal');pdf.setTextColor(0,0,0);pdf.setFontSize(8);
+        pdf.text('Ejercicio '+datos.ejercicio+' | Primeras apariciones hasta '+fechaCorta(datos.fechaActual),R-4,y+11,{align:'right'});
+        y+=25;
+        const mostradas=datos.obras.slice(0,ON7_LIMITE_PDF);
+        pdf.setFont('helvetica','bold');pdf.setTextColor(78,18,44);pdf.setFontSize(9.5);
+        pdf.text('Últimas incorporaciones',L,y);
+        pdf.setFont('helvetica','normal');pdf.setTextColor(45,45,45);pdf.setFontSize(7.6);
+        pdf.text('Mostrando '+mostradas.length+' de '+datos.cantidad+' obras',R,y,{align:'right'});
+        y+=5;
+        const widths=[27,18,17,39,140,28],xs=[L];
+        for(let i=1;i<widths.length;i++)xs.push(xs[i-1]+widths[i-1]);
+        const right=xs.map((x,i)=>x+widths[i]-2);
+        pdf.setFillColor(240,237,239);pdf.rect(L,y,R-L,10,'F');
+        pdf.setTextColor(0,0,0);pdf.setFont('helvetica','bold');pdf.setFontSize(7.1);
+        const headers=['Fecha de corte','Unidad','Pp','Clave de cartera','Obras del SICT','Modificado'];
+        headers.forEach((h,i)=>pdf.text(h,i===4?xs[i]+2:i===5?right[i]:xs[i]+2,y+6,{align:i===5?'right':'left'}));
+        y+=10;
+        if(!mostradas.length){
+          pdf.setFont('helvetica','normal');pdf.setFontSize(8.7);
+          pdf.text('No se identificaron obras incorporadas para el ámbito seleccionado.',L+3,y+12);
+          return;
+        }
+        const alturaFila=Math.min(11,Math.max(8.5,(190-y-1)/mostradas.length));
+        for(const [idx,r] of mostradas.entries()) {
+          if(idx%2===1){pdf.setFillColor(250,249,249);pdf.rect(L,y,R-L,alturaFila,'F');}
+          pdf.setFont('helvetica','normal');pdf.setFontSize(7.25);pdf.setTextColor(0,0,0);
+          const baseY=y+alturaFila/2+2.0;
+          pdf.text(pdfSafe(fechaCorta(r.fechaPrimera)),xs[0]+2,baseY);
+          pdf.text(pdfSafe(r.unidad||'–'),xs[1]+2,baseY);
+          pdf.text(pdfSafe(r.pp||'–'),xs[2]+2,baseY);
+          pdf.text(pdfSafe(r.cartera||'–'),xs[3]+2,baseY);
+          const lineasObra=pdf.splitTextToSize(pdfSafe(r.obra),widths[4]-4);
+          const visibles=lineasObra.slice(0,3);
+          if(lineasObra.length>3){
+            let ultima=visibles[2];
+            while(pdf.getTextWidth(ultima+'...')>widths[4]-4&&ultima.length>0)ultima=ultima.slice(0,-1);
+            visibles[2]=ultima+'...';
+          }
+          pdf.setFontSize(7.1);
+          const paso=3.0;
+          pdf.text(visibles,xs[4]+2,y+Math.max(3.0,(alturaFila-paso*(visibles.length-1))/2+1.65));
+          pdf.setFont('helvetica','bold');pdf.setFontSize(7.6);
+          pdf.text(amount(r.modificado),right[5],baseY,{align:'right'});
+          pdf.setDrawColor(232,232,232);pdf.setLineWidth(.12);pdf.line(L,y+alturaFila,R,y+alturaFila);
+          y+=alturaFila;
+        }
+        pdf.setFont('helvetica','normal');pdf.setTextColor(90,90,90);pdf.setFontSize(7.5);
+        pdf.text('Listado limitado a las 10 incorporaciones más recientes; los indicadores consideran todas las obras.',L,y+5);
+      }
+      function showReport(rows, rowsGeograficos, semanal,advertenciaSemanal,historial,advertenciaHistorico) {
         const totals = aggregate(rows);
         const breakdown = makeGroups(rows);
         put('kpi-original', amount(totals.original));
@@ -996,9 +1712,14 @@
         for (const item of breakdown.rows) appendRow(details, item.name, item.stats, item);
         appendRow(details, 'TOTAL', totals, { total: true });
         report = { totals, breakdown, geo: datosGeograficos(rowsGeograficos, rows),
-                   programacion: datosProgramacion(rows, window.__mesCortePEF), semanal };
+                   programacion: datosProgramacion(rows, window.__mesCortePEF), semanal, historial,
+                   saldos: se6Agrupar(rowsGeograficos,rows) };
+        mostrarMapa(report.geo);
         ponerGraficaProgramacion(report.programacion);
         mostrarSemana(semanal,advertenciaSemanal);
+        mostrarHistorico(historial,advertenciaHistorico);
+        mostrarSaldos(report.saldos);
+        mostrarObrasNuevas(historial?.obrasNuevas,advertenciaHistorico);
         document.getElementById('expansion-status').textContent =
           'Filas de desglose exportadas: ' + breakdown.rows.length + ' · Nodos con expansión distinta del valor inicial: ' + estadosExpandidos.size + '.';
         document.getElementById('results').hidden = false;
@@ -1034,7 +1755,10 @@
           const previo=await corteAnterior(filters.fecha);
           const anteriores=previo.registros?filterRows(previo.registros):null;
           const semanal=datosSemana(filtered,anteriores,previo.fecha);
-          showReport(filtered, ambitoGeografico, semanal,previo.advertencia);
+          let historial=null,advertenciaHistorico=null;
+          try{historial=await cargarHistorico();}
+          catch(e){advertenciaHistorico=String(e?.message||e);}
+          showReport(filtered, ambitoGeografico, semanal,previo.advertencia,historial,advertenciaHistorico);
         } catch (error) {
           report = null;
           download.disabled = true;
@@ -1054,8 +1778,10 @@
         download.disabled = true;
         downloadStatus.textContent = 'Preparando documento…';
         try {
-          const [mapImage, programImage, logo] = await Promise.all([
-            imagenMapa(report.geo), pngProgramacion(report.programacion), obtenerLogoSICT()
+          const [mapImage, programImage, logo, historicoImage, saldosImage] = await Promise.all([
+            imagenMapa(report.geo), pngProgramacion(report.programacion), obtenerLogoSICT(),
+             report.historial ? pngHistorico(report.historial) : Promise.resolve(null),
+             pngSaldos(report.saldos)
           ]);
           const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
           const PW = pdf.internal.pageSize.getWidth(), PH = pdf.internal.pageSize.getHeight();
@@ -1155,6 +1881,9 @@
           paginaMapa(pdf, mapImage, report.geo, logo);
           paginaProgramacion(pdf, programImage, report.programacion, logo);
           paginaSemana(pdf,report.semanal,logo);
+          if(historicoImage)paginaHistorico(pdf,historicoImage,report.historial,logo);
+           paginaSaldos(pdf,saldosImage,report.saldos,logo);
+          if(report.historial?.obrasNuevas)paginaObrasNuevas(pdf,report.historial.obrasNuevas,logo);
           const pages = pdf.internal.getNumberOfPages();
           for (let p = 1; p <= pages; p++) {
             pdf.setPage(p);
@@ -1163,10 +1892,18 @@
             pdf.text('SICT · PEF semanal · Datos del corte ' + filters.fecha, L, PH - 9);
             pdf.text('Página ' + p + ' de ' + pages, R, PH - 9, { align: 'right' });
           }
-          const scope = selected('obra') ? 'Obra' : selected('programa') ? 'Programa' : selected('concepto') ? 'Concepto' :
-            selected('sector') ? pdfSafe(display('sector')).replace(/[^a-zA-Z0-9-]/g, '') : 'Nacional';
+          // Incluir la entidad del filtro GENERAL también en el nombre de archivo.
+          // La selección local del gráfico de Saldos no modifica este ámbito.
+          const nombreSeguro = texto => String(texto).normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9_-]+/g,'_')
+            .replace(/^_+|_+$/g,'').slice(0,65);
+          const nivel = selected('obra') ? 'Obra' : selected('programa') ? 'Programa' :
+            selected('concepto') ? 'Concepto' : selected('sector') ? nombreSeguro(display('sector')) : '';
+          const entidadArchivo = selected('entidad') ? nombreSeguro(display('entidad')) : '';
+          const scope = [nivel,entidadArchivo].filter(Boolean).join('_') || 'Nacional';
           pdf.save('SICT_Informe_PEF_' + filters.fecha + '_' + scope + '.pdf');
-          downloadStatus.textContent = 'PDF generado: Avance Financiero, Mapa, Programación PEF y Ejercido semanal.' +
+          downloadStatus.textContent = 'PDF generado: Avance Financiero, Mapa, Programación PEF y Ejercido semanal' + (historicoImage ? ' e Histórico de ejercicio.' : '. Histórico no disponible; revisa datos/indice.json.') +
+             ' Incluye Saldos por entidad federativa y Obras nuevas (máximo 10 obras en PDF).' +
             (logo ? '' : ' Aviso: no fue posible cargar el logotipo SICT; se empleó texto de respaldo.');
         } catch (error) {
           downloadStatus.textContent = 'Error al generar el PDF: ' + (error?.message || String(error));

@@ -318,7 +318,32 @@
       const keys = ['fecha', 'sector', 'concepto', 'programa', 'obra', 'entidad'];
       const filters = {};
       const emptyValues = new Set(['', 'sin selección específica', 'sin seleccion especifica']);
-      const display = (key) => filters[key] || (key === 'sector' ? 'SICT' : key === 'entidad' ? 'Nacional' : 'Sin selección específica');
+      /* Selección múltiple de HTML 2: unión de nodos jerárquicos.
+         NO se confunde con expansion ni sobrescribe datos financieros. */
+      function cargarSeleccionMultiple() {
+        const raw = q.get('seleccion');
+        if (!raw) return [];
+        if (raw.length > 10000) throw new Error('Selección demasiado larga.');
+        let obj;
+        try { obj = JSON.parse(raw); }
+        catch (_) { throw new Error('Parámetro seleccion no contiene JSON válido.'); }
+        if (obj?.v !== 1 || !Array.isArray(obj.nodos) || obj.nodos.length < 2 || obj.nodos.length > 80)
+          throw new Error('Formato de selección múltiple no admitido.');
+        const nodos = [], identidades = new Set();
+        for (const nodo of obj.nodos) {
+          if (![1,2,3,4].includes(nodo?.n) ||
+              ['s','c','p','b'].some(k => typeof nodo[k] !== 'string' || nodo[k].length > 500) ||
+              !nodo.s || (nodo.n >= 2 && !nodo.c) ||
+              (nodo.n >= 3 && !nodo.p) || (nodo.n === 4 && !nodo.b))
+            throw new Error('La selección contiene un nodo inválido o incompleto.');
+          const id = [nodo.n, ...['s','c','p','b'].map(k=>normalize(nodo[k]))].join('|');
+          if (!identidades.has(id)) { identidades.add(id); nodos.push(nodo); }
+        }
+        return nodos;
+      }
+      const display = (key) => key === 'concepto' && seleccionMultiple.length
+        ? seleccionDescripcion
+        : filters[key] || (key === 'sector' ? 'SICT' : key === 'entidad' ? 'Nacional' : 'Sin selección específica');
       const fmt = new Intl.NumberFormat('es-MX', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
       const fmtInteger = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 });
       // Formatos equivalentes a HTML Avance Financiero Fila (Power BI).
@@ -333,6 +358,10 @@
       const normalize = (val) => String(val == null ? '' : val)
         .normalize('NFKC').replace(/[\u00a0\u2000-\u200b\u202f]/g, ' ')
         .replace(/[’‘´`]/g, "'").replace(/\s+/g, ' ').trim().toLocaleLowerCase('es-MX');
+      const seleccionMultiple = cargarSeleccionMultiple();
+      const seleccionDescripcion = seleccionMultiple.map(n=>
+        (n.n===1 ? 'Sector: '+n.s : n.n===2 ? n.c : n.n===3 ? 'Programa: '+n.p : 'Obra: '+n.b)
+      ).join(' · ');
       // Estado visual transmitido exclusivamente desde HTML 2 (no altera los filtros).
       const estadosExpandidos = new Map();
       function expansionIdentity(n,s,c,p) {
@@ -359,9 +388,15 @@
         const v = estadosExpandidos.get(expansionIdentity(n,s,c,p));
         return v === undefined ? n === 1 : v;
       }
-      const selected = (key) => !emptyValues.has(normalize(filters[key])) &&
-        !(key === 'sector' && normalize(filters[key]) === 'sict') &&
-        !(key === 'entidad' && normalize(filters[key]) === 'nacional');
+      const selected = (key) => seleccionMultiple.length && ['concepto','programa','obra'].includes(key)
+        ? key === 'concepto'  // Solo para mostrar el contexto 'Selección' en las siete secciones.
+        : !emptyValues.has(normalize(filters[key])) &&
+          !(key === 'sector' && normalize(filters[key]) === 'sict') &&
+          !(key === 'entidad' && normalize(filters[key]) === 'nacional');
+      // La estructura del desglose no debe confundir una selección plural con
+      // un filtro escalar de concepto/programa/obra.
+      const selectedJerarquia = key => seleccionMultiple.length
+        ? (key === 'sector' && selected(key)) : selected(key);
       for (const key of keys) {
         filters[key] = (q.get(key) || '').trim().slice(0, 500);
         document.getElementById('param-' + key).textContent = display(key);
@@ -412,9 +447,21 @@
         const keysAplicables = omitirEntidad
           ? ['sector', 'concepto', 'programa', 'obra']
           : ['sector', 'concepto', 'programa', 'obra', 'entidad'];
-        return rows.filter(row => keysAplicables.every(key =>
-          !selected(key) || normalize(row[key]) === normalize(filters[key])
-        ));
+        return rows.filter(row => {
+          if (seleccionMultiple.length) {
+            if (selected('sector') && normalize(row.sector) !== normalize(filters.sector)) return false;
+            if (!omitirEntidad && selected('entidad') && normalize(row.entidad) !== normalize(filters.entidad)) return false;
+            return seleccionMultiple.some(n =>
+              normalize(row.sector) === normalize(n.s) &&
+              (n.n < 2 || normalize(row.concepto) === normalize(n.c)) &&
+              (n.n < 3 || normalize(row.programa) === normalize(n.p)) &&
+              (n.n < 4 || normalize(row.obra) === normalize(n.b))
+            );
+          }
+          return keysAplicables.every(key =>
+            !selected(key) || normalize(row[key]) === normalize(filters[key])
+          );
+        });
       }
       // Orden dinámico de HTML_Hierarquia (Power BI), a partir de ID_DG,
       // ID_Pp e ID_Cv publicados desde dbo.BD_Ctl_PEF en cada JSON.
@@ -487,7 +534,7 @@
           for(const prog of group(conc.data,'programa'))
             anadirPrograma(prog,s,conc.name,indent+1);
         }
-        if(!selected('sector')&&!selected('concepto')&&!selected('programa')&&!selected('obra')){
+        if(!selectedJerarquia('sector')&&!selectedJerarquia('concepto')&&!selectedJerarquia('programa')&&!selectedJerarquia('obra')){
           for(const sector of group(rows,'sector')){
             result.push({...sector,group:true,indent:0,level:1});
             if(estaAbierto(1,sector.name))
@@ -495,17 +542,17 @@
           }
           return {label:'Sector y concepto',rows:result,description:'Desglose según los niveles abiertos en Avance Financiero de Power BI.'};
         }
-        if(!selected('concepto')&&!selected('programa')&&!selected('obra')){
+        if(!selectedJerarquia('concepto')&&!selectedJerarquia('programa')&&!selectedJerarquia('obra')){
           for(const conc of group(rows,'concepto'))
             anadirConcepto(conc,filters.sector,0);
           return {label:'Concepto',rows:result,description:'Conceptos y sus niveles abiertos según la selección exportada.'};
         }
-        if(!selected('programa')&&!selected('obra')){
+        if(!selectedJerarquia('programa')&&!selectedJerarquia('obra')){
           for(const prog of group(rows,'programa'))
             anadirPrograma(prog,filters.sector,filters.concepto,0);
           return {label:'Programa',rows:result,description:'Programas y obras desplegadas en la selección exportada.'};
         }
-        const next=selected('obra')?'entidad':'obra';
+        const next=selectedJerarquia('obra')?'entidad':'obra';
         const label=next==='entidad'?'Entidad':'Obra';
         return {label,rows:group(rows,next).map(g=>({...g,indent:0,group:false,level:next==='obra'?4:5})),
           description:'Desglose por '+label.toLowerCase()+' del ámbito seleccionado.'};
@@ -615,7 +662,7 @@
         document.getElementById('geo-imagen').innerHTML = svgMapa(geo);
         const ambito = [['Sector',display('sector')]];
         for (const k of ['concepto','programa','obra']) {
-          if (selected(k)) ambito.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k], display(k)]);
+          if (selected(k)) ambito.push([{concepto:(seleccionMultiple.length?'Selección':'Concepto'),programa:'Programa',obra:'Obra'}[k], display(k)]);
         }
         ambito.push(['Entidad',geo.selectedState || 'Nacional']);
         document.getElementById('geo-contexto').textContent = ambito.map(([k,v])=>k+': '+v).join('   |   ');
@@ -685,7 +732,7 @@
         pdf.setDrawColor(184, 155, 94); pdf.line(L, 28, R, 28);
         const parts = [['Sector', display('sector')]];
         for (const k of ['concepto', 'programa', 'obra']) if (selected(k))
-          parts.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k], display(k)]);
+          parts.push([{concepto:(seleccionMultiple.length?'Selección':'Concepto'),programa:'Programa',obra:'Obra'}[k], display(k)]);
         parts.push(['Entidad', geo.selectedState || 'Nacional']);
         pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.1);
         const description = parts.map(([k, v]) => k + ': ' + pdfSafe(v)).join('     |     ');
@@ -922,7 +969,7 @@
         ponerLogo(pdf,logo);
         pdf.setDrawColor(184,155,94);pdf.line(L,28,R,28);
         const context=[['Sector',display('sector')],['Entidad',display('entidad')]];
-        for(const k of ['concepto','programa','obra'])if(selected(k))context.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k],display(k)]);
+        for(const k of ['concepto','programa','obra'])if(selected(k))context.push([{concepto:(seleccionMultiple.length?'Selección':'Concepto'),programa:'Programa',obra:'Obra'}[k],display(k)]);
         const texto=context.map(([k,v])=>k+': '+pdfSafe(v)).join('  |  ');
         pdf.setFont('helvetica','normal');pdf.setTextColor(35,35,35);pdf.setFontSize(8);
         const lineas=pdf.splitTextToSize(texto,R-L-10);
@@ -1092,7 +1139,7 @@
         pdf.setFontSize(9);pdf.text('Corte: '+filters.fecha+' | Importes en millones de pesos',L,24);
         pdf.setDrawColor(184,155,94);pdf.line(L,28,R,28);
         const contexto=[['Sector',display('sector')],['Entidad',display('entidad')]];
-        for(const k of ['concepto','programa','obra'])if(selected(k))contexto.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k],display(k)]);
+        for(const k of ['concepto','programa','obra'])if(selected(k))contexto.push([{concepto:(seleccionMultiple.length?'Selección':'Concepto'),programa:'Programa',obra:'Obra'}[k],display(k)]);
         pdf.setFont('helvetica','normal');pdf.setTextColor(30,30,30);pdf.setFontSize(7.7);
         const lineas=pdf.splitTextToSize(contexto.map(([k,v])=>k+': '+pdfSafe(v)).join('   |   '),R-L-10);
         const boxH=6+4*lineas.length;
@@ -1367,7 +1414,7 @@
         pdf.setFontSize(9);pdf.text('Corte: '+filters.fecha+' | Importes en millones de pesos',L,24);
         pdf.setDrawColor(184,155,94);pdf.line(L,28,R,28);
         const contexto=[['Sector',display('sector')],['Entidad',display('entidad')]];
-        for(const k of ['concepto','programa','obra'])if(selected(k))contexto.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k],display(k)]);
+        for(const k of ['concepto','programa','obra'])if(selected(k))contexto.push([{concepto:(seleccionMultiple.length?'Selección':'Concepto'),programa:'Programa',obra:'Obra'}[k],display(k)]);
         pdf.setFont('helvetica','normal');pdf.setTextColor(30,30,30);pdf.setFontSize(7.7);
         const lineas=pdf.splitTextToSize(contexto.map(([k,v])=>k+': '+pdfSafe(v)).join('   |   '),R-L-10);
         const boxH=6+4*lineas.length;
@@ -1541,7 +1588,7 @@
         pdf.setFontSize(9);pdf.text('Corte: '+filters.fecha+' | Importes en millones de pesos',L,24);
         pdf.setDrawColor(184,155,94);pdf.line(L,28,R,28);
         const filtros=[['Sector',display('sector')],['Entidad',display('entidad')]];
-        for(const k of ['concepto','programa','obra'])if(selected(k))filtros.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k],display(k)]);
+        for(const k of ['concepto','programa','obra'])if(selected(k))filtros.push([{concepto:(seleccionMultiple.length?'Selección':'Concepto'),programa:'Programa',obra:'Obra'}[k],display(k)]);
         pdf.setFont('helvetica','normal');pdf.setTextColor(30,30,30);pdf.setFontSize(7.7);
         const lineas=pdf.splitTextToSize(filtros.map(([k,v])=>k+': '+pdfSafe(v)).join('   |   '),R-L-10);
         const boxH=6+4*lineas.length;
@@ -1630,7 +1677,7 @@
         pdf.setDrawColor(184,155,94);pdf.line(L,28,R,28);
         const contexto=[['Sector',display('sector')],['Entidad',display('entidad')]];
         for(const k of ['concepto','programa','obra'])if(selected(k))
-          contexto.push([{concepto:'Concepto',programa:'Programa',obra:'Obra'}[k],display(k)]);
+          contexto.push([{concepto:(seleccionMultiple.length?'Selección':'Concepto'),programa:'Programa',obra:'Obra'}[k],display(k)]);
         pdf.setFont('helvetica','normal');pdf.setTextColor(30,30,30);pdf.setFontSize(7.5);
         const lineas=pdf.splitTextToSize(contexto.map(([k,v])=>k+': '+pdfSafe(v)).join('   |   '),R-L-10);
         const altoCtx=6+4*lineas.length;
@@ -1707,7 +1754,9 @@
         put('extra-disponible', amount(totals.disponible));
         put('extra-registros', fmtInteger.format(totals.count));
         put('th-desglose', breakdown.label);
-        put('breakdown-description', breakdown.description);
+        put('breakdown-description', breakdown.description +
+          (seleccionMultiple.length ? ' Selección múltiple (' + seleccionMultiple.length +
+            ' nodos): ' + seleccionDescripcion + '.' : ''));
         details.replaceChildren();
         for (const item of breakdown.rows) appendRow(details, item.name, item.stats, item);
         appendRow(details, 'TOTAL', totals, { total: true });
@@ -1721,7 +1770,9 @@
         mostrarSaldos(report.saldos);
         mostrarObrasNuevas(historial?.obrasNuevas,advertenciaHistorico);
         document.getElementById('expansion-status').textContent =
-          'Filas de desglose exportadas: ' + breakdown.rows.length + ' · Nodos con expansión distinta del valor inicial: ' + estadosExpandidos.size + '.';
+          'Filas de desglose exportadas: ' + breakdown.rows.length +
+          ' · Nodos seleccionados: ' + seleccionMultiple.length +
+          ' · Nodos con expansión distinta del valor inicial: ' + estadosExpandidos.size + '.';
         document.getElementById('results').hidden = false;
         download.disabled = false;
         notice('Datos cargados: ' + fmtInteger.format(rows.length) + ' registros del corte ' + filters.fecha + '. Los importes se expresan en millones de pesos.', false);
@@ -1817,7 +1868,8 @@
           }
           header(false);
           for (const [key, label] of [['sector', 'Sector'], ['concepto', 'Concepto'], ['programa', 'Programa'], ['obra', 'Obra'], ['entidad', 'Entidad']]) {
-            if (key === 'sector' || key === 'entidad' || selected(key)) contextLine(label, display(key));
+            if (key === 'sector' || key === 'entidad' || selected(key))
+              contextLine(seleccionMultiple.length && key === 'concepto' ? 'Selección' : label, display(key));
           }
           y += 3;
           ensure(22);
@@ -1855,25 +1907,60 @@
           pdf.text('DESGLOSE DE AVANCE FINANCIERO', L, y); y += 5;
           tableHeader();
           const all = [...report.breakdown.rows, { name: 'TOTAL', stats: totals, total: true, indent: 0 }];
+          /* PAGINACIÓN CONTROLADA: cuando el desglose completo está a unos
+             milímetros de caber en la primera página, usamos filas ligeramente
+             más compactas. Evita crear otra página únicamente para TOTAL.
+             Los informes extensos conservan la densidad y paginación previas. */
+          function medirTabla(fontSize, minHeight, alturaLinea, paddingAltura) {
+            let acumulada = 0;
+            for (const item of all) {
+              const indent = Math.min(3, Math.max(0, Number(item.indent) || 0)) * 4;
+              pdf.setFont('helvetica', (item.group || item.total) ? 'bold' : 'normal');
+              pdf.setFontSize(fontSize);
+              const lineas = pdf.splitTextToSize(pdfSafe(item.name), colW[0] - 5 - indent);
+              acumulada += Math.max(minHeight, lineas.length * alturaLinea + paddingAltura);
+            }
+            return acumulada;
+          }
+          const espacioParaTabla = bottom - y;
+          let compactarTabla = false;
+          if (all.length <= 12) {
+            const alturaNormal = medirTabla(7.6, 7.3, 3.8, 2.3);
+            if (alturaNormal > espacioParaTabla) {
+              const alturaCompacta = medirTabla(7.2, 6.55, 3.5, 2.15);
+              compactarTabla = alturaCompacta <= espacioParaTabla - 0.35;
+            }
+          }
+          const tamanoTabla = compactarTabla ? 7.2 : 7.6;
+          const minimaFila = compactarTabla ? 6.55 : 7.3;
+          const altoLinea = compactarTabla ? 3.5 : 3.8;
+          const paddingFila = compactarTabla ? 2.15 : 2.3;
+          const baseTexto = compactarTabla ? 4.35 : 4.7;
           for (const item of all) {
             const itemName = pdfSafe(item.name);
-            pdf.setFontSize(7.6);
+            const negrita = (item.group || item.total) ? 'bold' : 'normal';
+            pdf.setFont('helvetica', negrita);
+            pdf.setFontSize(tamanoTabla);
             const indentMM = Math.min(3, Math.max(0, Number(item.indent) || 0)) * 4;
             const firstWidth = colW[0] - 5 - indentMM;
             const labelLines = pdf.splitTextToSize(itemName, firstWidth);
-            const rh = Math.max(7.3, labelLines.length * 3.8 + 2.3);
-            if (y + rh > bottom) { header(true); tableHeader(); }
+            const rh = Math.max(minimaFila, labelLines.length * altoLinea + paddingFila);
+            if (y + rh > bottom) {
+              header(true);
+              tableHeader();
+              pdf.setFont('helvetica', negrita);
+              pdf.setFontSize(tamanoTabla);
+            }
             if (item.group || item.total) {
               pdf.setFillColor(245, 243, 244); pdf.rect(L, y, R - L, rh, 'F');
               if (item.total) { pdf.setDrawColor(106, 27, 61); pdf.line(L, y, R, y); }
             }
-            pdf.setFont('helvetica', (item.group || item.total) ? 'bold' : 'normal');
             pdf.setTextColor(0, 0, 0);
-            pdf.text(labelLines, starts[0] + 2 + indentMM, y + 4.7);
+            pdf.text(labelLines, starts[0] + 2 + indentMM, y + baseTexto);
             const t = item.stats;
             const values = [t.original, t.modificado, t.ejercido, t.avance, t.saldo, t.comprometido, t.disponible];
             for (let i = 0; i < values.length; i++) {
-              pdf.text(i === 3 ? fmtPct(values[i]) : amount(values[i]), right[i + 1], y + 4.7, { align: 'right' });
+              pdf.text(i === 3 ? fmtPct(values[i]) : amount(values[i]), right[i + 1], y + baseTexto, { align: 'right' });
             }
             pdf.setDrawColor(232, 232, 232); pdf.line(L, y + rh, R, y + rh);
             y += rh;

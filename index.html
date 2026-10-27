@@ -352,7 +352,7 @@
       const fmtInteger = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 });
       // Formatos equivalentes a HTML Avance Financiero Fila (Power BI).
       const fmtPct = (num) => num === null ? '–' : fmt.format(num) + '%';
-      const amount = (num) => num === null ? '–' : fmt.format(Math.abs(num) < 0.0000005 ? 0 : num);
+      const amount = (num) => num === null ? '–' : fmt.format(Math.abs(num) < 0.05 ? 0 : num);
       // DAX ROUND redondea a la unidad indicada, con mitades alejándose de cero.
       // La pequeña tolerancia evita cambiar el resultado por errores binarios de JS.
       function daxRound(num, digits = 2) {

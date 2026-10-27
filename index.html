@@ -193,13 +193,14 @@
         <div><dt>Programa</dt><dd id="param-programa">—</dd></div>
         <div><dt>Obra</dt><dd id="param-obra">—</dd></div>
         <div><dt>Entidad</dt><dd id="param-entidad">—</dd></div>
+         <div><dt>Vista financiera</dt><dd id="param-vista">—</dd></div>
       </dl>
       <div id="status" role="status" aria-live="polite" class="status">Consultando datos financieros…</div>
       <section id="results" hidden aria-labelledby="resumen">
         <h2 id="resumen">Resumen financiero</h2>
         <div class="kpis">
-          <div class="kpi"><span class="label">Original</span><strong id="kpi-original">—</strong><span class="unit">Millones de pesos</span></div>
-          <div class="kpi"><span class="label">Modificado</span><strong id="kpi-modificado">—</strong><span class="unit">Millones de pesos</span></div>
+          <div class="kpi"><span class="label" id="kpi-primero-label">Original</span><strong id="kpi-original">—</strong><span class="unit">Millones de pesos</span></div>
+          <div class="kpi"><span class="label" id="kpi-segundo-label">Modificado</span><strong id="kpi-modificado">—</strong><span class="unit">Millones de pesos</span></div>
           <div class="kpi"><span class="label">Ejercido</span><strong id="kpi-ejercido">—</strong><span class="unit">Millones de pesos</span></div>
           <div class="kpi"><span class="label">Saldo</span><strong id="kpi-saldo">—</strong><span class="unit">Millones de pesos</span></div>
         </div>
@@ -214,7 +215,7 @@
         <p id="breakdown-description" class="table-intro"></p>
         <div class="table-wrap">
           <table aria-label="Desglose financiero en millones de pesos">
-            <thead><tr><th id="th-desglose">Ámbito</th><th>Original</th><th>Modificado</th><th>Ejercido</th><th>Avance</th><th>Saldo</th><th>Comprometido</th><th>Disponible</th></tr></thead>
+            <thead><tr id="financial-table-head"><th id="th-desglose">Ámbito</th><th>Original</th><th>Modificado</th><th>Ejercido</th><th>Avance</th><th>Saldo</th><th>Comprometido</th><th>Disponible</th></tr></thead>
             <tbody id="detail-body"></tbody>
           </table>
         </div>
@@ -315,6 +316,9 @@
       'use strict';
       const PAGE_ROOT = new URL('.', location.href);
       const q = new URLSearchParams(location.search);
+       // Vista solicitada desde HTML 2. Enlaces antiguos conservan el modo anual.
+       const VISTA_MES = (q.get('vista') || '').trim().toLowerCase() === 'mes';
+       const NOMBRE_VISTA = VISTA_MES ? 'Al mes' : 'Anual';
       const keys = ['fecha', 'sector', 'concepto', 'programa', 'obra', 'entidad'];
       const filters = {};
       const emptyValues = new Set(['', 'sin selección específica', 'sin seleccion especifica']);
@@ -401,7 +405,8 @@
         filters[key] = (q.get(key) || '').trim().slice(0, 500);
         document.getElementById('param-' + key).textContent = display(key);
       }
-      const status = document.getElementById('status');
+       document.getElementById('param-vista').textContent = NOMBRE_VISTA;
+       const status = document.getElementById('status');
       const download = document.getElementById('download');
       const downloadStatus = document.getElementById('download-status');
       const details = document.getElementById('detail-body');
@@ -414,8 +419,9 @@
         if (typeof val !== 'number' || !Number.isFinite(val)) throw new Error('El JSON contiene un importe no numérico.');
         return val;
       }
-      function aggregate(rows) {
-        const totals = { original: 0, modificado: 0, ejercido: 0, saldo: 0, comprometido: 0, reserva: 0, disponible: 0, count: rows.length };
+       // Mantener INTACTA la aritmética anual validada para enlaces anteriores.
+       function aggregateAnual(rows) {
+         const totals = { original: 0, modificado: 0, ejercido: 0, saldo: 0, comprometido: 0, reserva: 0, disponible: 0, count: rows.length };
         for (const row of rows) {
           const a = row.anual;
           totals.original += getNumber(a.original);
@@ -438,9 +444,63 @@
         totals.modificado = Math.abs(totals.modificado) < 1e-10 ? null : totals.modificado;
         totals.avance = totals.modificado === null || Math.abs(totals.ejercido) < 1e-10
           ? null : 100 * totals.ejercido / totals.modificado;
-        return totals;
-      }
-      // El informe financiero SÍ aplica el filtro de entidad; el mapa usa un
+         return totals;
+       }
+       // Vista Al mes de HTML 2: importes del corte semanal vigente, pero
+       // agrupados por Periodo presupuestario (fin de mes). NO comparar el
+       // día 22 con un Periodo 31/10 ni excluir octubre por ello.
+       // Las 12 posiciones del JSON se conservan como enero a diciembre.
+       function aggregateMes(rows) {
+         const mesCorte = window.__mesCortePEF;
+         if (!Number.isInteger(mesCorte) || mesCorte < 1 || mesCorte > 12)
+           throw new Error('Mes de corte inválido para la vista Al mes.');
+         const t = { original: 0, modificado: 0, programado: 0, ejercido: 0,
+           saldo: 0, comprometido: 0, reserva: 0, disponible: 0,
+           avance: null, count: rows.length };
+         let congelado = 0, descongelado = 0;
+         for (const r of rows) {
+           t.modificado += getNumber(r.anual.modificado); // Modificado anual, columna A
+           const m = r.mensual;
+           for (const campo of ['modificado', 'ejercido', 'comprometido', 'congelado', 'descongelado']) {
+             if (!Array.isArray(m?.[campo]) || m[campo].length !== 12)
+               throw new Error('El JSON no contiene doce meses para ' + campo + '.');
+           }
+           for (let i = 0; i < mesCorte; i++) {
+             t.programado += getNumber(m.modificado[i]);
+             t.comprometido += getNumber(m.comprometido[i]);
+             congelado += getNumber(m.congelado[i]);
+             descongelado += getNumber(m.descongelado[i]);
+           }
+           // [Ejercido2] original suma el ejercido mensual de la instantánea;
+           // en los cortes normales no hay ejercicio en meses futuros.
+           for (let i = 0; i < 12; i++) t.ejercido += getNumber(m.ejercido[i]);
+         }
+         const programado = Math.abs(t.programado) < 1e-10 ? null : t.programado;
+         const saldo = daxRound((programado ?? 0) - t.ejercido, 2);
+         const reserva = congelado - descongelado;
+         // DAX [% Avance al mes] = ROUND(DIVIDE([Ejercido2],[Calendario al mes]),3).
+         // Se redondea la fracción ANTES de pasarla a porcentaje.
+         t.avance = programado === null ? null : 100 * daxRound(t.ejercido / programado, 3);
+         t.saldo = saldo;
+         t.disponible = saldo - t.comprometido - reserva;
+         t.reserva = Math.abs(reserva) < 1e-10 ? null : reserva;
+         t.comprometido = Math.abs(t.comprometido) < 1e-10 ? null : t.comprometido;
+         t.programado = programado;
+         t.modificado = Math.abs(t.modificado) < 1e-10 ? null : t.modificado;
+         return t;
+       }
+       // La elección afecta EXCLUSIVAMENTE la primera sección del informe.
+       function aggregate(rows) { return VISTA_MES ? aggregateMes(rows) : aggregateAnual(rows); }
+       const indicadoresFinancieros = () => VISTA_MES
+         ? [ ['Modificado', 'modificado'], ['Programado', 'programado'],
+             ['Ejercido', 'ejercido'], ['Avance', 'avance'],
+             ['Saldo', 'saldo'], ['Comprometido', 'comprometido'],
+             ['Reserva', 'reserva'], ['Disponible', 'disponible'] ]
+         : [ ['Original', 'original'], ['Modificado', 'modificado'],
+             ['Ejercido', 'ejercido'], ['Avance', 'avance'],
+             ['Saldo', 'saldo'], ['Comprometido', 'comprometido'],
+             ['Disponible', 'disponible'] ];
+       // El informe financiero SÍ aplica el filtro de entidad; el mapa usa un
       // ámbito nacional por sector/concepto/programa/obra, sin entidad.
       // Esto permite resaltar Tlaxcala sin perder los importes de los demás estados.
       function filterRows(rows, omitirEntidad = false) {
@@ -571,13 +631,8 @@
         if (options?.level===4) row.classList.add('obra');
         if (options?.total) row.classList.add('total');
         td(row, name, options?.indent ? (options.indent===1?'indent':options.indent===2?'indent2':'indent3') : '');
-        td(row, amount(stats.original));
-        td(row, amount(stats.modificado));
-        td(row, amount(stats.ejercido));
-        td(row, fmtPct(stats.avance));
-        td(row, amount(stats.saldo));
-        td(row, amount(stats.comprometido));
-        td(row, amount(stats.disponible));
+         for (const [label, clave] of indicadoresFinancieros())
+           td(row, label === 'Avance' ? fmtPct(stats[clave]) : amount(stats[clave]));
         body.appendChild(row);
       }
       function put(id, value) { document.getElementById(id).textContent = value; }
@@ -1744,8 +1799,10 @@
       function showReport(rows, rowsGeograficos, semanal,advertenciaSemanal,historial,advertenciaHistorico) {
         const totals = aggregate(rows);
         const breakdown = makeGroups(rows);
-        put('kpi-original', amount(totals.original));
-        put('kpi-modificado', amount(totals.modificado));
+        put('kpi-primero-label', VISTA_MES ? 'Modificado' : 'Original');
+        put('kpi-segundo-label', VISTA_MES ? 'Programado al mes' : 'Modificado');
+        put('kpi-original', amount(VISTA_MES ? totals.modificado : totals.original));
+        put('kpi-modificado', amount(VISTA_MES ? totals.programado : totals.modificado));
         put('kpi-ejercido', amount(totals.ejercido));
         put('kpi-saldo', amount(totals.saldo));
         put('extra-avance', fmtPct(totals.avance));
@@ -1754,7 +1811,15 @@
         put('extra-disponible', amount(totals.disponible));
         put('extra-registros', fmtInteger.format(totals.count));
         put('th-desglose', breakdown.label);
-        put('breakdown-description', breakdown.description +
+         const financialHead = document.getElementById('financial-table-head');
+         financialHead.replaceChildren();
+         for (const titulo of [breakdown.label, ...indicadoresFinancieros().map(x => x[0])]) {
+           const th = document.createElement('th');
+           th.textContent = titulo;
+           financialHead.appendChild(th);
+         }
+         put('resumen', VISTA_MES ? 'Resumen financiero · Al mes' : 'Resumen financiero');
+         put('breakdown-description', (VISTA_MES ? 'Vista Al mes. ' : '') + breakdown.description +
           (seleccionMultiple.length ? ' Selección múltiple (' + seleccionMultiple.length +
             ' nodos): ' + seleccionDescripcion + '.' : ''));
         details.replaceChildren();
@@ -1775,7 +1840,7 @@
           ' · Nodos con expansión distinta del valor inicial: ' + estadosExpandidos.size + '.';
         document.getElementById('results').hidden = false;
         download.disabled = false;
-        notice('Datos cargados: ' + fmtInteger.format(rows.length) + ' registros del corte ' + filters.fecha + '. Los importes se expresan en millones de pesos.', false);
+         notice('Datos cargados: ' + fmtInteger.format(rows.length) + ' registros del corte ' + filters.fecha + '. Vista financiera: ' + NOMBRE_VISTA + '. Importes en millones de pesos.', false);
       }
       async function init() {
         if (!/^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(filters.fecha)) {
@@ -1838,7 +1903,11 @@
           const PW = pdf.internal.pageSize.getWidth(), PH = pdf.internal.pageSize.getHeight();
           const L = 14, R = PW - 14;
           const bottom = PH - 20;
-          const colW = [78, 27, 29, 29, 19, 29, 30, 28];
+          // Nueve columnas para Al mes; ocho columnas anuales SIN alteración.
+           // Ambos diseños mantienen exactamente el ancho disponible en A4 horizontal.
+           const colW = VISTA_MES
+             ? [78, 23, 28, 26, 18, 25, 27, 19, 25]
+             : [78, 27, 29, 29, 19, 29, 30, 28];
           const starts = [L];
           for (let i = 1; i < colW.length; i++) starts.push(starts[i - 1] + colW[i - 1]);
           const right = starts.map((x, i) => x + colW[i] - 2.5);
@@ -1848,7 +1917,7 @@
             if (nextPage) pdf.addPage();
             pdf.setFillColor(106, 27, 61); pdf.rect(0, 0, PW, 6, 'F');
             pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(78, 18, 44);
-            pdf.text('SICT | Avance financiero de inversión', L, 17);
+            pdf.text('SICT | Avance financiero de inversión' + (VISTA_MES ? ' · Al mes' : ''), L, 17);
             ponerLogo(pdf,logo);
             pdf.setFontSize(9); pdf.text('Corte: ' + filters.fecha + ' | Importes en millones de pesos', L, 24);
             pdf.setDrawColor(184, 155, 94); pdf.line(L, 28, R, 28);
@@ -1876,8 +1945,8 @@
           pdf.setFont('helvetica', 'bold'); pdf.setTextColor(78, 18, 44); pdf.setFontSize(10);
           pdf.text('RESUMEN FINANCIERO', L, y); y += 5;
           const cardX = [L, L + 67, L + 134, L + 201];
-          const cardNames = ['Original', 'Modificado', 'Ejercido', 'Saldo'];
-          const cardNums = [totals.original, totals.modificado, totals.ejercido, totals.saldo];
+          const cardNames = VISTA_MES ? ['Modificado', 'Programado', 'Ejercido', 'Saldo'] : ['Original', 'Modificado', 'Ejercido', 'Saldo'];
+          const cardNums = VISTA_MES ? [totals.modificado, totals.programado, totals.ejercido, totals.saldo] : [totals.original, totals.modificado, totals.ejercido, totals.saldo];
           for (let i = 0; i < 4; i++) {
             pdf.setFillColor(248, 247, 248); pdf.setDrawColor(221, 213, 217);
             pdf.roundedRect(cardX[i], y, 64, 17, 1, 1, 'FD');
@@ -1895,7 +1964,7 @@
           function tableHeader() {
             pdf.setFillColor(234, 229, 232); pdf.rect(L, y, R - L, 9, 'F');
             pdf.setFont('helvetica', 'bold'); pdf.setTextColor(0, 0, 0); pdf.setFontSize(7.25);
-            const headers = [report.breakdown.label, 'Original', 'Modificado', 'Ejercido', 'Avance', 'Saldo', 'Comprometido', 'Disponible'];
+            const headers = [report.breakdown.label, ...indicadoresFinancieros().map(x => x[0])];
             for (let i = 0; i < headers.length; i++) {
               if (i === 0) pdf.text(pdfSafe(headers[i]), starts[i] + 2, y + 6);
               else pdf.text(headers[i], right[i], y + 6, { align: 'right' });
@@ -1958,9 +2027,10 @@
             pdf.setTextColor(0, 0, 0);
             pdf.text(labelLines, starts[0] + 2 + indentMM, y + baseTexto);
             const t = item.stats;
-            const values = [t.original, t.modificado, t.ejercido, t.avance, t.saldo, t.comprometido, t.disponible];
+            const values = indicadoresFinancieros();
             for (let i = 0; i < values.length; i++) {
-              pdf.text(i === 3 ? fmtPct(values[i]) : amount(values[i]), right[i + 1], y + baseTexto, { align: 'right' });
+              const [label, clave] = values[i];
+              pdf.text(label === 'Avance' ? fmtPct(t[clave]) : amount(t[clave]), right[i + 1], y + baseTexto, { align: 'right' });
             }
             pdf.setDrawColor(232, 232, 232); pdf.line(L, y + rh, R, y + rh);
             y += rh;
@@ -1988,7 +2058,7 @@
             selected('concepto') ? 'Concepto' : selected('sector') ? nombreSeguro(display('sector')) : '';
           const entidadArchivo = selected('entidad') ? nombreSeguro(display('entidad')) : '';
           const scope = [nivel,entidadArchivo].filter(Boolean).join('_') || 'Nacional';
-          pdf.save('SICT_Informe_PEF_' + filters.fecha + '_' + scope + '.pdf');
+          pdf.save('SICT_Informe_PEF_' + filters.fecha + '_' + scope + (VISTA_MES ? '_Al_mes' : '') + '.pdf');
           downloadStatus.textContent = 'PDF generado: Avance Financiero, Mapa, Programación PEF y Ejercido semanal' + (historicoImage ? ' e Histórico de ejercicio.' : '. Histórico no disponible; revisa datos/indice.json.') +
              ' Incluye Saldos por entidad federativa y Obras nuevas (máximo 10 obras en PDF).' +
             (logo ? '' : ' Aviso: no fue posible cargar el logotipo SICT; se empleó texto de respaldo.');

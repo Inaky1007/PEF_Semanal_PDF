@@ -151,14 +151,14 @@
     .on7-resumen-contexto { margin-left:auto; font-size:12px; font-weight:600; text-align:right; }
     .on7-desc { font-size:12px; color:#444; margin:0 0 10px; line-height:1.4; }
     .on7-scroll { max-height:380px; overflow:auto; max-width:100%; border:1px solid #dedede; border-radius:5px; }
-    .on7-head,.on7-row { display:grid; grid-template-columns:135px 78px 70px 140px minmax(340px,1fr) 125px; min-width:1000px; }
+    .on7-head,.on7-row { display:grid; grid-template-columns:135px 78px 70px 140px 190px minmax(340px,1fr) 125px; min-width:1220px; }
     .on7-head { position:sticky; top:0; z-index:3; background:#f4f4f4; border-bottom:1px solid #ccc; }
     .on7-row { border-bottom:1px solid #ece8ea; background:#fff; }
     .on7-row:hover { background:#fcf5f8; }
     .on7-head>div,.on7-row>div { padding:9px 10px; border-right:1px solid #eee9eb; min-width:0; overflow-wrap:anywhere; display:flex; align-items:center; }
     .on7-head>div { font-size:12px; font-weight:750; min-height:45px; text-align:center; justify-content:center; }
     .on7-row>div { font-size:13px; min-height:41px; }
-    .on7-row>div:nth-child(1),.on7-row>div:nth-child(2),.on7-row>div:nth-child(3),.on7-row>div:nth-child(4) { justify-content:center; text-align:center; }
+    .on7-row>div:nth-child(1),.on7-row>div:nth-child(2),.on7-row>div:nth-child(3),.on7-row>div:nth-child(4),.on7-row>div:nth-child(5) { justify-content:center; text-align:center; }
     .on7-row>div:last-child { justify-content:flex-end; font-weight:750; font-variant-numeric:tabular-nums; white-space:nowrap; }
     .on7-empty { padding:25px; text-align:center; font-size:13px; font-weight:650; }
     @media(max-width:760px) { .on7-resumen-contexto { text-align:left; flex-basis:100%; margin-left:0; } }
@@ -292,13 +292,12 @@
           <h2 id="on7-heading">Obras nuevas</h2>
           <div class="on7-contexto" id="on7-contexto">Consultando primeras apariciones de obras…</div>
           <div class="on7-resumen" id="on7-resumen" hidden>
-            <div class="on7-resumen-item">Obras incorporadas <strong id="on7-cantidad">—</strong></div>
             <div class="on7-resumen-item">Modificado en su incorporación <strong id="on7-total">—</strong></div>
             <div class="on7-resumen-contexto" id="on7-plazo"></div>
           </div>
-          <p class="on7-desc" id="on7-description">El listado en pantalla conserva todas las incorporaciones. La página PDF muestra como máximo las diez más recientes.</p>
+          <p class="on7-desc" id="on7-description">El listado en pantalla conserva todos los registros de primeras apariciones. La página PDF muestra como máximo los diez más recientes.</p>
           <div class="on7-scroll" role="region" tabindex="0" aria-label="Listado de obras nuevas con desplazamiento vertical y horizontal">
-            <div class="on7-head"><div>Fecha de corte</div><div>Unidad</div><div>Pp</div><div>Clave de cartera</div><div>Obras del SICT</div><div>Modificado</div></div>
+            <div class="on7-head"><div>Fecha de corte</div><div>Unidad</div><div>Pp</div><div>Clave de cartera</div><div>Entidad federativa</div><div>Obras del SICT</div><div>Modificado</div></div>
             <div id="on7-body"></div>
           </div>
         </section>
@@ -1368,6 +1367,7 @@
           const unidad=String(r.no_unidad??id.slice(4,7)??'');
           return {id_pef:id,fechaPrimera:x.fechaPrimera,unidad,
             pp:String(r.id_pp??''),cartera:String(r.id_cv??''),
+            entidad:nombreEstado(r.entidad)||String(r.entidad??'').trim()||'Sin identificar',
             obra:String(r.obra??'').trim()||'Sin nombre registrado',
             modificado:x.modificadoPrimera};
         }).sort((a,b)=>b.fechaPrimera.localeCompare(a.fechaPrimera)||a.id_pef.localeCompare(b.id_pef));
@@ -1700,23 +1700,22 @@
         document.getElementById('on7-contexto').textContent='Información al corte del: '+
           fechaCorta(datos.fechaActual)+' de '+datos.ejercicio+' | Sector: '+display('sector')+
           ' | Entidad: '+display('entidad');
-        put('on7-cantidad',fmtInteger.format(datos.cantidad));
         put('on7-total',amount(datos.modificadoTotal));
         put('on7-plazo','Primeras apariciones del ejercicio '+datos.ejercicio+' hasta '+fechaCorta(datos.fechaActual));
-        document.getElementById('on7-description').textContent=datos.cantidad+
-          ' incorporaciones en el listado completo. En el PDF se muestran hasta '+
-          ON7_LIMITE_PDF+' obras, priorizando la fecha más reciente.'+
+        document.getElementById('on7-description').textContent=
+          'El listado en pantalla conserva todos los registros de primeras apariciones. '+
+          'En el PDF se muestran hasta '+ON7_LIMITE_PDF+' registros, priorizando la fecha más reciente.'+
           (advertencia?' Aviso: '+advertencia:'');
         if(!datos.obras.length){
           const div=document.createElement('div');div.className='on7-empty';
-          div.textContent='No se identificaron obras incorporadas durante '+datos.ejercicio+
+          div.textContent='No se identificaron primeras apariciones durante '+datos.ejercicio+
             ' hasta el '+fechaCorta(datos.fechaActual)+'.';
           cuerpo.appendChild(div);return;
         }
         const frag=document.createDocumentFragment();
         for(const r of datos.obras){
           const fila=document.createElement('div');fila.className='on7-row';
-          const valores=[fechaCorta(r.fechaPrimera),r.unidad||'–',r.pp||'–',r.cartera||'–',r.obra,amount(r.modificado)];
+          const valores=[fechaCorta(r.fechaPrimera),r.unidad||'–',r.pp||'–',r.cartera||'–',r.entidad,r.obra,amount(r.modificado)];
           for(const valor of valores){const cel=document.createElement('div');cel.textContent=valor;fila.appendChild(cel);}
           frag.appendChild(fila);
         }
@@ -1742,27 +1741,23 @@
         pdf.setFillColor(248,247,247);pdf.setDrawColor(222,216,219);
         pdf.roundedRect(L,y,R-L,18,2,2,'FD');
         pdf.setFont('helvetica','normal');pdf.setTextColor(0,0,0);pdf.setFontSize(8.3);
-        pdf.text('Obras incorporadas',L+5,y+6);
-        pdf.text('Modificado en su incorporación',L+85,y+6);
+        pdf.text('Modificado en su incorporación',L+5,y+6);
         pdf.setFont('helvetica','bold');pdf.setTextColor(106,27,61);pdf.setFontSize(12);
-        pdf.text(fmtInteger.format(datos.cantidad),L+5,y+13);
-        pdf.text(amount(datos.modificadoTotal),L+85,y+13);
+        pdf.text(amount(datos.modificadoTotal),L+5,y+13);
         pdf.setFont('helvetica','normal');pdf.setTextColor(0,0,0);pdf.setFontSize(8);
         pdf.text('Ejercicio '+datos.ejercicio+' | Primeras apariciones hasta '+fechaCorta(datos.fechaActual),R-4,y+11,{align:'right'});
         y+=25;
         const mostradas=datos.obras.slice(0,ON7_LIMITE_PDF);
         pdf.setFont('helvetica','bold');pdf.setTextColor(78,18,44);pdf.setFontSize(9.5);
         pdf.text('Últimas incorporaciones',L,y);
-        pdf.setFont('helvetica','normal');pdf.setTextColor(45,45,45);pdf.setFontSize(7.6);
-        pdf.text('Mostrando '+mostradas.length+' de '+datos.cantidad+' obras',R,y,{align:'right'});
         y+=5;
-        const widths=[27,18,17,39,140,28],xs=[L];
+        const widths=[27,17,14,33,38,112,28],xs=[L];
         for(let i=1;i<widths.length;i++)xs.push(xs[i-1]+widths[i-1]);
         const right=xs.map((x,i)=>x+widths[i]-2);
         pdf.setFillColor(240,237,239);pdf.rect(L,y,R-L,10,'F');
         pdf.setTextColor(0,0,0);pdf.setFont('helvetica','bold');pdf.setFontSize(7.1);
-        const headers=['Fecha de corte','Unidad','Pp','Clave de cartera','Obras del SICT','Modificado'];
-        headers.forEach((h,i)=>pdf.text(h,i===4?xs[i]+2:i===5?right[i]:xs[i]+2,y+6,{align:i===5?'right':'left'}));
+        const headers=['Fecha de corte','Unidad','Pp','Clave de cartera','Entidad federativa','Obras del SICT','Modificado'];
+        headers.forEach((h,i)=>pdf.text(h,i===6?right[i]:xs[i]+2,y+6,{align:i===6?'right':'left'}));
         y+=10;
         if(!mostradas.length){
           pdf.setFont('helvetica','normal');pdf.setFontSize(8.7);
@@ -1778,18 +1773,20 @@
           pdf.text(pdfSafe(r.unidad||'–'),xs[1]+2,baseY);
           pdf.text(pdfSafe(r.pp||'–'),xs[2]+2,baseY);
           pdf.text(pdfSafe(r.cartera||'–'),xs[3]+2,baseY);
-          const lineasObra=pdf.splitTextToSize(pdfSafe(r.obra),widths[4]-4);
+          const lineasEntidad=pdf.splitTextToSize(pdfSafe(r.entidad),widths[4]-4).slice(0,2);
+          pdf.text(lineasEntidad,xs[4]+2,y+Math.max(3.0,(alturaFila-3*(lineasEntidad.length-1))/2+1.65));
+          const lineasObra=pdf.splitTextToSize(pdfSafe(r.obra),widths[5]-4);
           const visibles=lineasObra.slice(0,3);
           if(lineasObra.length>3){
             let ultima=visibles[2];
-            while(pdf.getTextWidth(ultima+'...')>widths[4]-4&&ultima.length>0)ultima=ultima.slice(0,-1);
+            while(pdf.getTextWidth(ultima+'...')>widths[5]-4&&ultima.length>0)ultima=ultima.slice(0,-1);
             visibles[2]=ultima+'...';
           }
           pdf.setFontSize(7.1);
           const paso=3.0;
-          pdf.text(visibles,xs[4]+2,y+Math.max(3.0,(alturaFila-paso*(visibles.length-1))/2+1.65));
+          pdf.text(visibles,xs[5]+2,y+Math.max(3.0,(alturaFila-paso*(visibles.length-1))/2+1.65));
           pdf.setFont('helvetica','bold');pdf.setFontSize(7.6);
-          pdf.text(amount(r.modificado),right[5],baseY,{align:'right'});
+          pdf.text(amount(r.modificado),right[6],baseY,{align:'right'});
           pdf.setDrawColor(232,232,232);pdf.setLineWidth(.12);pdf.line(L,y+alturaFila,R,y+alturaFila);
           y+=alturaFila;
         }
